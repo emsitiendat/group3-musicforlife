@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_main">#0D0A1C</color> <color name="bg_surface">#19152B</color>
+    <color name="bg_surface_hover">#251E3E</color>
+
+    <color name="bg_pure_dark">#121212</color> <color name="bg_glass">#8019152B</color> <color name="color_accent">#FF5252</color>
+    <color name="color_accent_secondary">#7C3AED</color>
+    <color name="color_heart">#FF5252</color>
+    <color name="color_success">#00C44A</color>
+    <color name="color_xp">#FFBE0B</color>
+
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#9CA3AF</color>
+
+    <color name="white_10">#1AFFFFFF</color> <color name="white_20">#33FFFFFF</color> </resources>

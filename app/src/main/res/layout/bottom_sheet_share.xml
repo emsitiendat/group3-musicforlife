@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_bottom_sheet_modern"
+    android:orientation="vertical"
+    android:paddingTop="12dp"
+    android:paddingBottom="24dp">
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp"
+        android:background="@color/text_secondary"
+        android:alpha="0.5"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:paddingHorizontal="24dp"
+        android:text="Chia sẻ"
+        android:textColor="@color/text_primary"
+        android:textSize="22sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/btn_share_community"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:text="Chia sẻ lên Cộng đồng"
+        android:textColor="@color/color_accent"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:drawableStartCompat="@drawable/ic_lyrics"
+        app:drawableTint="@color/color_accent"
+        android:drawablePadding="16dp"/>
+
+    <TextView
+        android:id="@+id/btn_share_story_ig"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:text="Chia sẻ lên Story"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        app:drawableStartCompat="@drawable/ic_share"
+        app:drawableTint="@color/text_primary"
+        android:drawablePadding="16dp" />
+
+    <TextView
+        android:id="@+id/btn_share_copy_link"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:text="Sao chép liên kết"
+        android:textColor="@color/text_primary"
+        android:textSize="16sp"
+        app:drawableStartCompat="@drawable/ic_share"
+        app:drawableTint="@color/text_primary"
+        android:drawablePadding="16dp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginVertical="8dp"
+        android:background="#1AFFFFFF" />
+
+    <TextView
+        android:id="@+id/btn_share_more"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="24dp"
+        android:text="Khác..."
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+</LinearLayout>
