@@ -1,0 +1,184 @@
+{# templates/artist_detail.html #}
+{% extends "base.html" %}
+
+{% macro format_duration(seconds) %}
+  {% if seconds is not none and seconds > 0 %}
+    {% set minutes = (seconds // 60)|int %}
+    {% set remaining_seconds = (seconds % 60)|int %}
+    {{ "{:d}:{:02d}".format(minutes, remaining_seconds) }}
+  {% else %}
+    --:--
+  {% endif %}
+{% endmacro %}
+
+
+{% block content %}
+
+{# --- CONTAINER CHÍNH CHO PHẦN HEADER NGHỆ SĨ --- #}
+<div class="relative mb-6 mb-4"> {# Thêm relative để có thể đặt banner tuyệt đối hoặc làm nền #}
+
+    {# --- 1. HIỂN THỊ BANNER NẾU CÓ --- #}
+    {% if artist_banner_path %}
+    <div class="h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 w-full rounded-lg overflow-hidden shadow-xl">
+        {# object-cover để ảnh lấp đầy và giữ tỷ lệ, có thể bị cắt nếu tỷ lệ ảnh gốc khác #}
+        <img src="{{ url_for('static', filename=artist_banner_path) }}" 
+             alt="Ảnh bìa của {{ artist_name }}"
+             class="w-full h-full object-cover">
+    </div>
+    {% else %}
+    {# Fallback: Nếu không có banner, có thể để một dải màu gradient hoặc màu tối #}
+    <div class="h-40 sm:h-48 md:h-56 w-full rounded-lg bg-gradient-to-b from-gray-700 to-gray-800 shadow-lg">
+        
+    </div>
+    {% endif %}
+    {# --- KẾT THÚC BANNER --- #}
+
+    {# --- 2. KHỐI THÔNG TIN CHÍNH (AVATAR, TÊN, BIO) --- #}
+    {# Đặt khối này đè lên banner một chút nếu có banner #}
+    <div class="absolute inset-x-0 bottom-0 md:relative md:bottom-auto md:inset-x-auto 
+                px-4 pb-4 md:pb-2 md:px-0 
+                flex flex-col md:flex-row items-center md:items-end gap-4 md:gap-6 
+                {% if artist_banner_path %}transform md:-translate-y-2 lg:-translate-y-2{% endif %}"> 
+                
+
+        {# Ảnh đại diện tròn của Nghệ sĩ #}
+        <div class="flex-shrink-0 w-32 h-32 md:w-40 lg:w-48 md:h-40 lg:h-48 
+                    rounded-full bg-gray-700 overflow-hidden shadow-2xl 
+                    border-4 border-gray-800 group-hover/container:border-gray-600 transition-all duration-200">
+                    {# Thêm border để nổi bật trên banner #}
+            {% if artist_cover_path %} {# artist_cover_path là profile_image_path #}
+                <img src="{{ url_for('static', filename=artist_cover_path) }}"
+                     alt="Ảnh nghệ sĩ {{ artist_name }}"
+                     class="w-full h-full object-cover"
+                     onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';">
+            {% else %}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" 
+                     class="w-full h-full p-6 md:p-8 text-gray-400"> {# Kích thước icon điều chỉnh bằng padding #}
+                    <path fill-rule="evenodd" d="M18.685 19.097A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.065 7.097A9.716 9.716 0 0012 21.75a9.716 9.716 0 006.685-2.653Zm-12.54-1.285A7.486 7.486 0 0112 15a7.486 7.486 0 015.855 2.812A8.224 8.224 0 0112 20.25a8.224 8.224 0 01-5.855-2.438ZM15.75 9a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0Z" clip-rule="evenodd" />
+                </svg>
+            {% endif %}
+        </div>
+        
+        {# Thông tin tên, bio, số bài hát #}
+        <div class="flex-grow text-center md:text-left 
+                    {% if artist_banner_path %} md:mt-16 lg:mt-20 {% else %} mt-4 md:mt-0 {% endif %}"> 
+                    {# Thêm margin-top nếu không có banner để không bị sát avatar quá #}
+            <p class="text-xs font-bold uppercase text-gray-400 mb-1">Nghệ sĩ</p>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-2 md:mb-3 leading-tight">
+                {{ artist_name }}
+            </h1>
+            
+            {% if artist_bio %}
+               <p class="text-gray-300 text-sm mb-3 max-w-xl lg:max-w-2xl whitespace-pre-line line-clamp-3 hover:line-clamp-none transition-all duration-200 ease-in-out cursor-pointer" 
+                  title="Nhấn để xem thêm/thu gọn tiểu sử">
+                  {{ artist_bio }}
+               </p>
+            {% endif %}
+            
+            <p class="text-gray-300 text-sm">
+                 {{ song_count }} bài hát
+            </p>
+        </div>
+    </div> {# Kết thúc khối thông tin chính #}
+</div> {# Kết thúc container header nghệ sĩ #}
+
+
+{# Song List - Danh sách bài hát của nghệ sĩ #}
+{% if songs_data %}
+  <div class="song-list-container space-y-1" data-context="artist_{{ artist_name|urlencode }}">
+    {% for data in songs_data %}
+      {% set song = data.song %}
+      {% set is_liked = data.is_liked_by_current %}
+      {% set like_count = data.like_count %}
+      {% set listen_count = data.listen_count %}
+      {% set duration = data.duration %}
+
+      <div class="group relative flex items-center justify-between p-2 rounded-md hover:bg-[#282828] transition duration-150 ease-in-out">
+        <div class="playable-song-item flex items-center flex-grow mr-4 min-w-0 cursor-pointer"
+             data-song-id="{{ song.id }}"
+             data-song-title="{{ song.title|e }}"
+             data-song-artist="{{ song.artist|e }}"
+             data-song-file="{{ url_for('static', filename=song.file_path) }}"
+             data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else default_cover_placeholder_url }}"
+             data-song-is-liked="{{ is_liked|lower }}"
+             data-song-duration="{{ duration|default(0) }}">
+
+          <img src="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else default_cover_placeholder_url }}"
+               onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';"
+               alt="Ảnh bìa {{ song.title }}"
+               class="w-10 h-10 object-cover rounded mr-4 flex-shrink-0">
+          <div class="min-w-0">
+            <div class="text-white font-semibold truncate group-hover:text-[#1DB954]" title="{{ song.title }}">{{ song.title }}</div>
+            <div class="text-gray-400 text-sm truncate mb-1">{{ song.artist }}</div>
+            <div class="flex items-center space-x-3 text-xs text-gray-500">
+              <span class="flex items-center" title="{{ like_count }} lượt thích"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1 {{ 'text-green-500' if is_liked else '' }}"> <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9C4.045 12.733 2 10.352 2 7.5a4.5 4.5 0 018-2.828A4.5 4.5 0 0118 7.5c0 2.852-2.044 5.233-3.885 6.82a22.049 22.049 0 01-3.744 2.582l-.019.01-.005.003h-.002a.739.739 0 01-.69.001l-.002-.001Z" /> </svg> {{ like_count }} </span>
+              <span class="flex items-center" title="{{ listen_count }} lượt nghe"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5Z" /><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0Z" clip-rule="evenodd" /></svg> {{ listen_count }} </span>
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center space-x-2 flex-shrink-0">
+          <span class="text-sm text-gray-400 w-12 text-right">{{ format_duration(duration) }}</span>
+          <button class="add-to-queue-button p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Thêm vào hàng đợi"
+                  data-song-id="{{ song.id }}"
+                  data-song-title="{{ song.title|e }}"
+                  data-song-artist="{{ song.artist|e }}"
+                  data-song-file="{{ url_for('static', filename=song.file_path) }}"
+                  data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else default_cover_placeholder_url }}"
+                  data-song-is-liked="{{ is_liked|lower }}"
+                  data-song-duration="{{ duration|default(0) }}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" /></svg>
+          </button>
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('add_song_to_playlist_view', song_id=song.id) }}"
+               class="bg-transparent border border-gray-600 hover:border-white text-gray-300 hover:text-white text-xs font-bold py-1 px-3 rounded-full cursor-pointer transition duration-200 ease-in-out uppercase tracking-wider transform hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100">
+              Thêm
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="bg-[#181818] p-6 rounded-lg text-center">
+    <p class="text-gray-400 mb-4">Không tìm thấy bài hát nào của nghệ sĩ {{ artist_name }}.</p>
+    <a href="{{ url_for('index') }}" class="mt-4 inline-block bg-[#1DB954] hover:bg-[#1ED760] text-black text-sm font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out transform hover:scale-105 uppercase tracking-wider"> Quay lại trang chủ </a>
+  </div>
+{% endif %}
+
+<div class="mt-8 space-x-4 text-sm">
+  <a href="{{ url_for('index') }}" class="text-gray-400 hover:text-white hover:underline"> &larr; Quay lại trang chủ </a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bioParagraph = document.querySelector('.whitespace-pre-line.line-clamp-3');
+    if (bioParagraph) {
+        
+        setTimeout(() => {
+            if (bioParagraph.scrollHeight > bioParagraph.clientHeight) {
+                // Nếu bị cắt, thêm class để người dùng biết có thể click
+                bioParagraph.classList.add('cursor-pointer');
+                bioParagraph.setAttribute('title', 'Nhấn để xem thêm');
+                
+                bioParagraph.addEventListener('click', function() {
+                    this.classList.toggle('line-clamp-3');
+                    if (this.classList.contains('line-clamp-3')) {
+                        this.setAttribute('title', 'Nhấn để xem thêm');
+                    } else {
+                        this.setAttribute('title', 'Nhấn để thu gọn');
+                    }
+                });
+            } else {
+                // Nếu không bị cắt, không cần làm gì hoặc xóa title nếu có
+                bioParagraph.removeAttribute('title');
+            }
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

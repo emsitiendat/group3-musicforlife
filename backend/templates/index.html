@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{# Macro định dạng thời gian #}
+{% macro format_duration(seconds) %}
+  {% if seconds is not none and seconds > 0 %}
+    {% set minutes = (seconds // 60)|int %}
+    {% set remaining_seconds = (seconds % 60)|int %}
+    {{ "{:d}:{:02d}".format(minutes, remaining_seconds) }}
+  {% else %}
+    --:--
+  {% endif %}
+{% endmacro %}
+
+
+{% block content %}
+
+{# Page Title #}
+<div class="mb-8">
+  <h1 class="text-3xl font-bold text-white">{{ greeting_message | default('Chào mừng trở lại') }}!</h1>
+  <p class="text-gray-400">Khám phá các bài hát mới nhất và đề xuất cho bạn.</p>
+</div>
+
+{# Recommendation Section #}
+<div class="mb-12">
+<h2 class="text-2xl font-semibold text-white mb-4">{{ general_recommendation_title | default('Đề xuất cho bạn') }}</h2>
+  <div id="recommendations-container" class="song-list-container grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" data-context="recommendations">
+    <p id="recommendations-loading" class="text-gray-400 col-span-full">Đang tải đề xuất...</p>
+    {# JavaScript sẽ chèn các đề xuất vào đây #}
+  </div>
+</div>
+
+{# Phần Playlist Nổi Bật #}
+{% if featured_playlists %} {# Chỉ hiển thị nếu có playlist nổi bật #}
+<div class="mb-12">
+  
+<h2 class="text-2xl font-semibold text-white mb-4">{{ featured_playlist_section_title | default('Playlist Nổi Bật') }}</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {# Lặp qua featured_playlists_data được truyền từ app.py #}
+    {% for item_data in featured_playlists %}
+      {% set playlist = item_data.playlist %}
+      {% set covers = item_data.covers %}
+      {% set song_count = item_data.song_count %}
+      {% set contributing_artists = item_data.artists %} 
+
+      <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}"
+         class="bg-[#181818] p-4 rounded-lg shadow-lg hover:bg-[#282828] transition duration-200 ease-in-out group relative flex flex-col">
+
+        <div class="playlist-cover-container w-full h-auto mb-3 aspect-square relative overflow-hidden rounded-md shadow-lg bg-gray-700 flex items-center justify-center">
+            {% if playlist.custom_cover_path %}
+                {# 1. Ưu tiên ảnh bìa tùy chỉnh của playlist #}
+                <img src="{{ url_for('static', filename=playlist.custom_cover_path) }}"
+                     alt="Ảnh bìa {{ playlist.name }}"
+                     class="w-full h-full object-cover" loading="lazy"
+                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';">
+            {% elif song_count >= 4 and covers_list and covers_list|length >= 4 %}
+                {# 2. Nếu không có ảnh tùy chỉnh VÀ có đủ 4 ảnh từ bài hát -> Ghép 4 ảnh #}
+                <div class="grid grid-cols-2 grid-rows-2 w-full h-full">
+                    {% for i in range(4) %}
+                        <div class="w-full h-full bg-gray-600">
+                            {% if covers_list[i] is defined and covers_list[i] %}
+                                <img src="{{ url_for('static', filename=covers_list[i]) }}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.style.visibility='hidden';">
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% elif covers_list and covers_list[0] %}
+                {# 3. Nếu không có ảnh tùy chỉnh VÀ có ít nhất 1 ảnh từ bài hát -> Hiển thị ảnh đầu tiên #}
+                <img src="{{ url_for('static', filename=covers_list[0]) }}" alt="Ảnh bìa {{ playlist.name }}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';">
+            {% elif song_count == 0 %}
+                {# 4. Nếu playlist rỗng -> Hiển thị ảnh mặc định cho playlist rỗng #}
+                <img src="{{ url_for('static', filename='img/covers/default_empty_playlist.png') }}" alt="Playlist trống" class="w-full h-full object-cover opacity-75">
+            {% else %}
+                {# 5. Trường hợp còn lại (không có ảnh tùy chỉnh, không có ảnh từ bài hát nhưng playlist không rỗng) -> Icon mặc định #}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-16 h-16 text-gray-400">
+                    <path fill-rule="evenodd" d="M3 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6Zm14.25 9.75a.75.75 0 0 0 .75-.75V12a.75.75 0 0 0-1.5 0v3a.75.75 0 0 0 .75.75Zm-4.5-.75a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1 0-1.5h3a.75.75 0 0 1 .75.75Z" clip-rule="evenodd" />
+                    <path d="M11.283 6.993c.19-.396.586-.643 1.033-.643h.198c.447 0 .843.247 1.033.643l3.183 6.606c.318.66-.165 1.394-.899 1.394h-6.366c-.734 0-1.217-.734-.899-1.394l3.182-6.606Z" />
+                </svg>
+            {% endif %}
+        </div>
+
+        <div class="flex-grow min-w-0">
+            
+           
+            {% if contributing_artists %}
+            <p class="text-gray-500 text-xs mt-1 truncate" title="{{ contributing_artists|join(', ') }}">
+                {{ contributing_artists|join(', ') }}
+            </p>
+            {% endif %}
+            
+        </div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %} {# Kết thúc if featured_playlists #}
+
+{# Phần Nghệ sĩ #}
+{% if artists %}
+<div class="mb-12">
+  <h2 class="text-2xl font-semibold text-white mb-4">Nghệ sĩ nổi bật</h2>
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    {% for artist_data in artists %}
+      <a href="{{ url_for('artist_detail_page', artist_name_url=artist_data.name) }}" class="bg-[#181818] hover:bg-[#282828] rounded-lg p-4 transition duration-200 ease-in-out flex flex-col items-center text-center group">
+        <img src="{{ url_for('static', filename=artist_data.cover) if artist_data.cover else url_for('static', filename='img/covers/default_cover.png') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';"
+             alt="Ảnh nghệ sĩ {{ artist_data.name }}"
+             class="w-24 h-24 rounded-full object-cover mb-3 shadow-lg group-hover:shadow-xl">
+        <p class="text-white font-semibold text-sm truncate w-full" title="{{ artist_data.name }}">{{ artist_data.name }}</p>
+        <p class="text-xs text-gray-400">Nghệ sĩ</p>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Recent Listens Section #}
+{% if current_user.is_authenticated and recent_listens %}
+<div class="mb-12">
+  <h2 class="text-2xl font-semibold text-white mb-4">Nghe gần đây</h2>
+  <div class="song-list-container grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" data-context="recent_listens">
+    {% for listen_data in recent_listens %}
+      {% set song = listen_data.song %}
+      {% set is_liked = listen_data.is_liked %}
+      <div class="playable-song-item bg-[#181818] p-4 rounded-lg shadow-lg hover:bg-[#282828] transition duration-200 ease-in-out group cursor-pointer relative"
+           data-song-id="{{ song.id }}"
+           data-song-title="{{ song.title|e }}"
+           data-song-artist="{{ song.artist|e }}"
+           data-song-file="{{ url_for('static', filename=song.file_path) }}"
+           data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+           data-song-is-liked="{{ is_liked|lower }}"
+           data-song-duration="{{ song.duration|default(0) }}">
+
+        <img src="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+             onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';"
+             alt="Ảnh bìa {{ song.title }}"
+             class="w-full h-auto object-cover rounded mb-3 aspect-square shadow-md">
+
+        <h3 class="text-white font-semibold truncate group-hover:text-[#1DB954]" title="{{ song.title }}">{{ song.title }}</h3>
+        <p class="text-gray-400 text-sm truncate">{{ song.artist }}</p>
+
+        <div class="absolute bottom-16 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out">
+             <button class="add-to-queue-button p-2 rounded-full text-gray-300 bg-black bg-opacity-50 hover:bg-opacity-75 hover:text-white focus:outline-none pointer-events-auto"
+                     title="Thêm vào hàng đợi"
+                     data-song-id="{{ song.id }}"
+                     data-song-title="{{ song.title|e }}"
+                     data-song-artist="{{ song.artist|e }}"
+                     data-song-file="{{ url_for('static', filename=song.file_path) }}"
+                     data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+                     data-song-is-liked="{{ is_liked|lower }}"
+                     data-song-duration="{{ song.duration|default(0) }}">
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" /></svg>
+             </button>
+             <button class="card-play-button bg-[#1DB954] text-black rounded-full p-3 shadow-lg transform hover:scale-110 active:scale-100 pointer-events-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="mb-8">
+  <h2 class="text-2xl font-semibold text-white mb-4">Tất cả bài hát</h2>
+</div>
+
+{% if songs_data %}
+  <div class="song-list-container space-y-1" data-context="all_songs">
+    {% for data in songs_data %}
+      {% set song = data.song %}
+      {% set like_count = data.like_count %}
+      {% set listen_count = data.listen_count %}
+      {% set share_count = data.share_count %}
+      {% set is_liked_by_current = data.is_liked_by_current %}
+      {% set duration = data.duration %}
+
+      <div class="group relative flex items-center justify-between p-2 rounded-md hover:bg-[#282828] transition duration-150 ease-in-out">
+        <div class="playable-song-item flex items-center flex-grow mr-4 min-w-0 cursor-pointer"
+             data-song-id="{{ song.id }}"
+             data-song-title="{{ song.title|e }}"
+             data-song-artist="{{ song.artist|e }}"
+             data-song-file="{{ url_for('static', filename=song.file_path) }}"
+             data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+             data-song-is-liked="{{ is_liked_by_current|lower }}"
+             data-song-duration="{{ duration|default(0) }}">
+
+          <img src="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+               onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';"
+               alt="Ảnh bìa {{ song.title }}"
+               class="w-10 h-10 object-cover rounded mr-4 flex-shrink-0">
+          <div class="min-w-0">
+            <div class="text-white font-semibold truncate group-hover:text-[#1DB954]" title="{{ song.title }}">{{ song.title }}</div>
+            <div class="text-gray-400 text-sm truncate mb-1">{{ song.artist }}</div>
+            <div class="flex items-center space-x-3 text-xs text-gray-500">
+               <span class="flex items-center" title="{{ like_count }} lượt thích"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1 {{ 'text-green-500' if is_liked_by_current else '' }}"> <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9C4.045 12.733 2 10.352 2 7.5a4.5 4.5 0 018-2.828A4.5 4.5 0 0118 7.5c0 2.852-2.044 5.233-3.885 6.82a22.049 22.049 0 01-3.744 2.582l-.019.01-.005.003h-.002a.739.739 0 01-.69.001l-.002-.001Z" /> </svg> {{ like_count }} </span>
+               <span class="flex items-center" title="{{ listen_count }} lượt nghe"> <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 mr-1"><path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5Z" /><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0Z" clip-rule="evenodd" /></svg> {{ listen_count }} </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 flex-shrink-0">
+          <span class="text-sm text-gray-400 w-12 text-right">{{ format_duration(duration) }}</span>
+          <button class="add-to-queue-button p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Thêm vào hàng đợi"
+                  data-song-id="{{ song.id }}"
+                  data-song-title="{{ song.title|e }}"
+                  data-song-artist="{{ song.artist|e }}"
+                  data-song-file="{{ url_for('static', filename=song.file_path) }}"
+                  data-song-cover="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+                  data-song-is-liked="{{ is_liked_by_current|lower }}"
+                  data-song-duration="{{ duration|default(0) }}">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" /></svg>
+          </button>
+          {% if current_user.is_authenticated %}
+            <a href="{{ url_for('add_song_to_playlist_view', song_id=song.id) }}"
+               class="bg-transparent border border-gray-600 hover:border-white text-gray-300 hover:text-white text-xs font-bold py-1 px-3 rounded-full cursor-pointer transition duration-200 ease-in-out uppercase tracking-wider transform hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100">
+              Thêm
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="bg-[#181818] p-6 rounded-lg text-center">
+     <p class="text-gray-400">Chưa có bài hát nào được tải lên.</p>
+  </div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recommendationsContainer = document.getElementById('recommendations-container');
+    const loadingIndicator = document.getElementById('recommendations-loading');
+    const recommendationLimit = 5;
+
+    function createRecommendationCard(song) {
+        const card = document.createElement('div');
+        card.className = 'playable-song-item bg-[#181818] p-4 rounded-lg shadow-lg hover:bg-[#282828] transition duration-200 ease-in-out group cursor-pointer relative';
+        card.dataset.songId = song.id;
+        card.dataset.songTitle = song.title;
+        card.dataset.songArtist = song.artist;
+        card.dataset.songFile = song.file_path;
+        card.dataset.songCover = song.cover_art_path || "{{ url_for('static', filename='img/covers/default_cover.png') }}";
+        card.dataset.songIsLiked = String(song.is_liked).toLowerCase();
+        card.dataset.songDuration = song.duration || 0;
+
+        const img = document.createElement('img');
+        img.src = card.dataset.songCover;
+        img.alt = `Ảnh bìa ${song.title}`;
+        img.className = 'w-full h-auto object-cover rounded mb-3 aspect-square shadow-md';
+        img.onerror = function() { this.onerror=null; this.src = "{{ url_for('static', filename='img/covers/default_cover.png') }}"; };
+
+        const title = document.createElement('h3');
+        title.className = 'text-white font-semibold truncate group-hover:text-[#1DB954]';
+        title.textContent = song.title; title.title = song.title;
+
+        const artist = document.createElement('p');
+        artist.className = 'text-gray-400 text-sm truncate'; artist.textContent = song.artist;
+
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.className = 'absolute bottom-16 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out';
+
+        const queueButton = document.createElement('button');
+        queueButton.className = 'add-to-queue-button p-2 rounded-full text-gray-300 bg-black bg-opacity-50 hover:bg-opacity-75 hover:text-white focus:outline-none pointer-events-auto';
+        queueButton.title = "Thêm vào hàng đợi";
+        for (const key in card.dataset) {
+            if (key.startsWith('song')) {
+                 queueButton.dataset[key] = card.dataset[key];
+             }
+         }
+        queueButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z" /></svg>`;
+
+        const playButton = document.createElement('button');
+        playButton.className = 'card-play-button bg-[#1DB954] text-black rounded-full p-3 shadow-lg transform hover:scale-110 active:scale-100 pointer-events-auto';
+        playButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z" clip-rule="evenodd" /></svg>';
+
+        buttonsContainer.appendChild(queueButton);
+        buttonsContainer.appendChild(playButton);
+
+        card.appendChild(img);
+        card.appendChild(title);
+        card.appendChild(artist);
+        card.appendChild(buttonsContainer);
+        return card;
+    }
+
+    fetch(`/api/recommendations?limit=${recommendationLimit}`)
+    .then(response => { if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); } return response.json(); })
+    .then(songs => {
+         if(loadingIndicator) loadingIndicator.style.display = 'none';
+         if (recommendationsContainer && !recommendationsContainer.classList.contains('song-list-container')) {
+             recommendationsContainer.classList.add('song-list-container');
+             recommendationsContainer.dataset.context = 'recommendations';
+         }
+         if (recommendationsContainer && songs && songs.length > 0) {
+              if (Array.isArray(songs)) {
+                  songs.forEach(song => { if(song) { recommendationsContainer.appendChild(createRecommendationCard(song)); } });
+              }
+         } else if(recommendationsContainer) {
+              const noDataDiv = document.createElement('p'); noDataDiv.className = 'text-gray-400 col-span-full'; noDataDiv.textContent = 'Chưa có đề xuất.';
+              recommendationsContainer.appendChild(noDataDiv);
+         }
+    })
+    .catch(error => { console.error('Error fetching recommendations:', error); if(loadingIndicator){ loadingIndicator.textContent = 'Lỗi tải đề xuất.'; loadingIndicator.classList.add('text-red-500'); } });
+});
+</script>
+
+{% endblock %}
+
+{% block scripts %} {% endblock %}

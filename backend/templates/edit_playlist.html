@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-full px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md space-y-8 bg-[#181818] p-10 rounded-lg shadow-lg">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+                Chỉnh sửa Playlist
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-400">{{ playlist.name }}</p>
+        </div>
+        <form class="mt-8 space-y-6" method="POST" action="{{ url_for('edit_playlist', playlist_id=playlist.id) }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="space-y-4">
+                {# Tên Playlist Input #}
+                <div>
+                    <label for="name" class="sr-only">{{ form.name.label }}</label>
+                    {{ form.name(id="name", required=True,
+                    class="relative block w-full appearance-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm",
+                    placeholder="Tên Playlist") }}
+                    {% if form.name.errors %}
+                        <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+
+                {# Checkbox Công khai #}
+                <div class="flex items-center">
+                     {{ form.is_public(id="is_public", class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-green-500 focus:ring-green-400 focus:ring-offset-gray-900 cursor-pointer") }}
+                     <label for="is_public" class="ml-2 block text-sm text-gray-300 cursor-pointer">{{ form.is_public.label.text }}</label>
+                </div>
+            <div class="pt-2">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Ảnh bìa</label>
+
+                    {# Hiển thị ảnh bìa hiện tại #}
+                    {# Biến current_cover được truyền từ route #}
+                    {% if current_cover %}
+                    <div class="mb-2">
+                        <img src="{{ url_for('static', filename=current_cover) }}"
+                             alt="Ảnh bìa hiện tại"
+                             class="w-24 h-24 object-cover rounded border border-gray-700 inline-block align-middle"
+                             onerror="this.style.display='none';"> {# Ẩn nếu ảnh lỗi #}
+                    </div>
+                    {# <<< THÊM CHECKBOX XÓA (CHỈ HIỆN KHI CÓ current_cover) >>> #}
+                    <div class="flex items-center mb-4">
+                        {{ form.remove_cover(id="remove_cover", class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-red-500 focus:ring-red-400 focus:ring-offset-gray-900 cursor-pointer") }}
+                        <label for="remove_cover" class="ml-2 block text-sm text-gray-300 cursor-pointer hover:text-red-400">{{ form.remove_cover.label.text }}</label>
+                    </div>
+                    {% else %}
+                     {# Thông báo nếu đang dùng ảnh tự động #}
+                     <p class="text-sm text-gray-500 mb-4 italic">Playlist này đang sử dụng ảnh bìa tự động.</p>
+                    {% endif %}
+
+                    {# Trường nhập file mới (luôn hiển thị) #}
+                    <label for="cover_image" class="block text-sm font-medium text-gray-300 mb-1">{{ form.cover_image.label }}</label>
+                    {{ form.cover_image(id="cover_image", class="block w-full text-sm text-gray-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900") }}
+                    {% if form.cover_image.errors %}
+                        <ul class="text-red-500 text-xs italic mt-1 pl-1">
+                            {% for error in form.cover_image.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                {# --- KẾT THÚC PHẦN ẢNH BÌA --- #}
+
+            </div>
+
+            <div>
+                {{ form.submit(value="Lưu thay đổi",
+                class="group relative flex w-full justify-center rounded-full border border-transparent bg-[#1DB954] py-2 px-4 text-sm font-bold text-black hover:bg-[#1ED760] focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer uppercase tracking-wider transform hover:scale-105 active:scale-100 transition duration-200 ease-in-out mt-6") }}
+            </div>
+        </form>
+
+        <div class="text-sm text-center mt-4">
+             <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+                &larr; Quay lại Playlist
+            </a>
+             <span class="text-gray-600 mx-2">|</span>
+            <a href="{{ url_for('playlists') }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+                Danh sách Playlist
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

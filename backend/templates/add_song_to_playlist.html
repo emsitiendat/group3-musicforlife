@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+
+<div class="max-w-lg mx-auto"> 
+
+{# Page Title #}
+
+<div class="mb-6 text-center">
+
+<h1 class="text-2xl font-bold text-white mb-1">Thêm bài hát vào Playlist</h1>
+
+<p class="text-lg text-gray-400">"{{ song.title }}" - {{ song.artist }}</p>
+
+</div>
+
+
+
+{# Playlist Selection Form #}
+
+{% if playlists %}
+
+<form method="POST" action="" class="bg-[#181818] p-6 rounded-lg shadow-lg space-y-4">
+            
+
+<p class="text-gray-300 font-semibold">Chọn (các) playlist bạn muốn thêm vào:</p>
+
+
+
+{# Playlist Checkbox List #}
+
+<div class="max-h-60 overflow-y-auto space-y-3 pr-2"> {# Scrollable list if many playlists #}
+
+{% for playlist in playlists %}
+
+<div class="flex items-center">
+
+{# Styled Checkbox #}
+
+<input type="checkbox" name="playlist_ids" value="{{ playlist.id }}" id="playlist_{{ playlist.id }}"
+
+class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-green-500 focus:ring-green-400 focus:ring-offset-gray-900 cursor-pointer">
+
+{# Label for Checkbox #}
+
+<label for="playlist_{{ playlist.id }}" class="ml-3 block text-sm font-medium text-gray-300 cursor-pointer">
+
+{{ playlist.name }}
+
+</label>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+
+
+{# Submit Button #}
+
+<div class="pt-4"> 
+
+<button type="submit"
+
+class="w-full flex justify-center rounded-full border border-transparent bg-[#1DB954] py-2 px-4 text-sm font-bold text-black hover:bg-[#1ED760] focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer uppercase tracking-wider transform hover:scale-105 active:scale-100 transition duration-200 ease-in-out">
+
+Thêm vào Playlist đã chọn
+
+</button>
+
+</div>
+
+</form>
+
+{% else %}
+
+{# Message when user has no playlists #}
+
+<div class="bg-[#181818] p-6 rounded-lg text-center">
+
+<p class="text-gray-400 mb-4">Bạn chưa có playlist nào.</p>
+
+<a href="{{ url_for('create_playlist') }}"
+
+class="inline-block bg-gray-700 hover:bg-gray-600 text-white text-sm font-bold py-2 px-4 rounded-full transition duration-200 ease-in-out transform hover:scale-105 uppercase tracking-wider">
+
+Tạo playlist mới?
+
+</a>
+
+</div>
+
+{% endif %}
+
+
+
+{# Back Link #}
+
+<div class="text-sm text-center mt-6">
+
+<a href="{{ url_for('index') }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+
+&larr; Quay lại trang chủ
+
+</a>
+
+
+
+</div>
+
+
+
+</div>
+
+{% endblock %}

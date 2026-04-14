@@ -1,0 +1,77 @@
+{# templates/admin/master.html #}
+{% extends 'admin/base.html' %} 
+
+
+{% block tail %}
+    
+    <script>
+        // Hàm toggle password
+        function togglePasswordVisibility(inputId, buttonElement) {
+            const passwordInput = document.getElementById(inputId);
+            const eyeOpenIcon = buttonElement.querySelector('.toggle-eye-open');
+            const eyeClosedIcon = buttonElement.querySelector('.toggle-eye-closed');
+            if (passwordInput && eyeOpenIcon && eyeClosedIcon) {
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    eyeOpenIcon.style.display = 'none';
+                    eyeClosedIcon.style.display = 'inline-block';
+                    buttonElement.setAttribute('title', 'Ẩn mật khẩu');
+                } else {
+                    passwordInput.type = "password";
+                    eyeOpenIcon.style.display = 'inline-block';
+                    eyeClosedIcon.style.display = 'none';
+                    buttonElement.setAttribute('title', 'Hiện mật khẩu');
+                }
+            } else { console.error("Toggle elements not found for", inputId); }
+        }
+
+        // Chạy sau khi DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("[DEBUG] Custom master (extending base): DOMContentLoaded fired.");
+
+            // Tìm các trường password
+            let passwordFieldsFound = [];
+            const pwById = document.getElementById('password');
+            const confPwById = document.getElementById('confirm_password');
+            if (pwById && pwById.type === 'password') { passwordFieldsFound.push(pwById); console.log("[DEBUG] Found #password by ID."); }
+            if (confPwById && confPwById.type === 'password') { passwordFieldsFound.push(confPwById); console.log("[DEBUG] Found #confirm_password by ID."); }
+            // Selector dự phòng
+            if (passwordFieldsFound.length < 2) {
+                 const fieldsBySelector = document.querySelectorAll('.form-horizontal input[type="password"][name="password"], .form-horizontal input[type="password"][name="confirm_password"]');
+                 fieldsBySelector.forEach(f => { if (!passwordFieldsFound.includes(f)) passwordFieldsFound.push(f); });
+            }
+            console.log(`[DEBUG] Total password fields to process: ${passwordFieldsFound.length}.`);
+
+            passwordFieldsFound.forEach(function(field, index) {
+                console.log(`[DEBUG] Processing field: ${field.id || field.name}`);
+                if (!field.id) { field.id = `admin-pw-<span class="math-inline">\{field\.name \|\| index\}\-</span>{Math.random().toString(36).substring(2, 9)}`; console.log(`[DEBUG] Assigned temporary ID ${field.id}`); }
+
+                const parentDiv = field.parentNode; 
+                // Kiểm tra xem nút đã được thêm chưa
+                if (parentDiv && !parentDiv.querySelector('.password-visibility-toggle')) {
+                    console.log(`[DEBUG] Adding toggle button for field ID: ${field.id}`);
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'relative';
+                    parentDiv.insertBefore(wrapper, field);
+                    wrapper.appendChild(field);
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.title = 'Hiện mật khẩu';
+                    button.classList.add('password-visibility-toggle');
+                    button.style.cssText = `position: absolute; top: 0; bottom: 0; right: 0; height: 100%; background: transparent; border: none; cursor: pointer; z-index: 10; padding: 0 0.75rem; display: flex; align-items: center; color: #6c757d;`;
+                    // SVG Icons
+                    button.innerHTML = `
+                        <svg class="toggle-eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="height: 1.25rem; width: 1.25rem; display: inline-block;"><path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /><path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" /></svg>
+                        <svg class="toggle-eye-closed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="height: 1.25rem; width: 1.25rem; display: none;"><path fill-rule="evenodd" d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l14.5 14.5a.75.75 0 1 0 1.06-1.06l-1.745-1.745a10.029 10.029 0 0 0 3.3-4.38 1.651 1.651 0 0 0 0-1.185A10.004 10.004 0 0 0 10 3c-.996 0-1.951.138-2.863.395L5.07 1.944A.75.75 0 0 0 3.28 2.22ZM7.06 4.969l.86 1.147a3.001 3.001 0 0 1 2.221.53l2.374 1.582A4.003 4.003 0 0 1 14 10a4 4 0 1 1-6.93-2.498l.53-1.417A9.982 9.982 0 0 1 10 5c.978 0 1.912.144 2.794.409l.797.266A11.44 11.44 0 0 0 10 4.5c-1.104 0-2.159.191-3.14.531l-.42.146A9.98 9.98 0 0 0 3.69 7.13l-.17.171A1.651 1.651 0 0 0 2.25 9.409a10.004 10.004 0 0 0 7.75 7.081l2.386-2.385a3.002 3.002 0 0 1-1.858-1.858l-1.583-2.374a3.003 3.003 0 0 1-.53-2.221Z" clip-rule="evenodd" /></svg>
+                    `;
+                button.onclick = function() { togglePasswordVisibility(field.id, this); };
+                wrapper.appendChild(button);
+                field.style.paddingRight = '2.5rem';
+                console.log(`[DEBUG] Toggle button added for ${field.id}.`);
+            }
+        });
+        console.log("[DEBUG] Password toggle script finished.");
+    });
+</script>
+{% endblock %}

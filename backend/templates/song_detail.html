@@ -1,0 +1,314 @@
+{# templates/song_detail.html #}
+{% extends "base.html" %}
+
+{% macro format_duration(seconds) %}
+  {% if seconds is not none and seconds > 0 %}
+    {% set minutes = (seconds // 60)|int %}
+    {% set remaining_seconds = (seconds % 60)|int %}
+    {{ "{:d}:{:02d}".format(minutes, remaining_seconds) }}
+  {% else %}
+    --:--
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+    <div class="flex flex-col md:flex-row gap-8 mb-8">
+        <div class="flex-shrink-0 w-full md:w-60 h-60">
+             <img src="{{ url_for('static', filename=song.cover_art_path) if song.cover_art_path else url_for('static', filename='img/covers/default_cover.png') }}"
+                  alt="Ảnh bìa {{ song.title }}"
+                  class="w-full h-full object-cover rounded-lg shadow-lg"
+                  onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/covers/default_cover.png') }}';">
+        </div>
+
+        <div class="flex-grow flex flex-col justify-center">
+             <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">{{ song.title }}</h1>
+             <a href="{{ url_for('artist_detail_page', artist_name_url=song.artist|urlencode) }}"
+                class="text-xl text-gray-300 hover:text-white hover:underline mb-4">
+                 {{ song.artist }}
+            </a>
+             <div class="text-sm text-gray-400 flex items-center space-x-4 mb-4">
+                <span>{{ format_duration(song.duration) }}</span>
+             </div>
+         </div>
+     </div>
+
+    <div class="mb-12">
+        <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-600 pb-2">Lời bài hát</h2>
+        <div id="song-detail-lyrics"
+             class="text-gray-300 whitespace-pre-wrap leading-relaxed text-lg max-h-96 overflow-y-auto bg-[#181818] p-4 rounded lyric-scroll-container text-center">
+            {% if not song.lyrics %}
+            <p class="text-gray-400 italic">Bài hát này chưa có lời.</p>
+            {% endif %}
+        </div>
+        <script id="lyrics-data" type="application/json">
+            {{ song.lyrics|tojson|safe if song.lyrics else 'null' }}
+        </script>
+    </div>
+
+    <div>
+        <h2 class="text-2xl font-semibold text-white mb-4 border-b border-gray-600 pb-2">Bình luận (<span id="comments-count">{{ comments|length }}</span>)</h2>
+        {% if current_user.is_authenticated %}
+        <form id="comment-form" method="POST" action="#" class="mb-6">
+             <textarea id="comment-text" name="text" rows="3"
+                       class="block w-full bg-gray-700 border border-gray-600 rounded-md p-3 text-gray-200 placeholder-gray-400 focus:ring-green-500 focus:border-green-500 sm:text-sm"
+                       placeholder="Viết bình luận của bạn..." required></textarea>
+             <div class="mt-2 flex justify-end">
+                 <button type="submit" id="submit-comment-btn"
+                         class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 focus:ring-offset-gray-800 disabled:opacity-50">
+                     Gửi bình luận
+                 </button>
+             </div>
+        </form>
+        {% else %}
+        <p class="text-gray-400 mb-6">Bạn cần <a href="{{ url_for('login', next=request.url) }}" class="text-green-400 hover:underline">đăng nhập</a> để bình luận.</p>
+        {% endif %}
+        <div id="comments-list" class="space-y-4">
+            {% if comments %}
+                {% for comment in comments %}
+                <div class="flex items-start space-x-3 bg-[#181818] p-3 rounded comment-item">
+                    <a href="{{ url_for('user_profile', username=comment.author.username) }}">
+                         <img src="{{ url_for('static', filename=comment.author.avatar_url) if comment.author.avatar_url else url_for('static', filename='img/avatars/default_avatar.png') }}"
+                              alt="Avatar {{ comment.author.name_display }}"
+                              class="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                              onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/avatars/default_avatar.png') }}';">
+                    </a>
+                    <div class="flex-grow">
+                        <p class="text-sm">
+                             <a href="{{ url_for('user_profile', username=comment.author.username) }}" class="font-semibold text-white hover:underline">{{ comment.author.name_display }}</a>
+                            <span class="text-xs text-gray-400 ml-2">{{ comment.timestamp.strftime('%H:%M %d/%m/%Y') }}</span>
+                         </p>
+                         <p class="mt-1 text-gray-300">{{ comment.text }}</p>
+                     </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-400 empty-comment-message">Chưa có bình luận nào.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function parseLRC(lrcString) {
+        if (!lrcString || typeof lrcString !== 'string') return [];
+        const lines = lrcString.split('\n'); const lyrics = [];
+        const timeRegex = /\[(\d{2,}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+        lines.forEach(line => {
+            let match; let lastIndex = 0; const times = [];
+            while ((match = timeRegex.exec(line)) !== null) {
+                const minutes = parseInt(match[1], 10); const seconds = parseInt(match[2], 10);
+                let milliseconds = 0; if (match[3]) { milliseconds = parseInt(match[3].padEnd(3, '0'), 10); }
+                const totalSeconds = minutes * 60 + seconds + milliseconds / 1000;
+                times.push(totalSeconds); lastIndex = timeRegex.lastIndex;
+            }
+            const text = line.substring(lastIndex).trim();
+            if (times.length > 0 && text) { times.forEach(time => lyrics.push({ time: time, text: text })); }
+        });
+        lyrics.sort((a, b) => a.time - b.time); return lyrics;
+    }
+
+    function renderLyrics(lyricsData, container, lyricClickHandler) {
+        const globalAudioPlayer = window.globalAudioPlayer;
+        if (!container) { return; }
+        container.innerHTML = ''; container.classList.remove('text-center'); container.classList.add('text-left');
+        if (!lyricsData || lyricsData.length === 0) {
+             container.innerHTML = '<p class="text-gray-400 italic text-center">Không có dữ liệu lời bài hát hợp lệ.</p>';
+             container.classList.remove('text-left'); container.classList.add('text-center'); return;
+        }
+        lyricsData.forEach((line, index) => {
+            const p = document.createElement('p');
+            p.textContent = line.text;
+            p.classList.add('lyric-line', 'cursor-pointer', 'px-2', 'py-1', 'rounded', 'transition-all', 'duration-200', 'ease-in-out');
+            p.dataset.time = line.time; p.dataset.index = index;
+            p.onclick = () => lyricClickHandler(line.time);
+            container.appendChild(p);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const lyricsContainer = document.getElementById('song-detail-lyrics');
+        const lyricsDataScript = document.getElementById('lyrics-data');
+        const songIdOnPage = {{ song.id }};
+        let pageParsedLyrics = [];
+        let pageCurrentLyricIndex = -1;
+        let lyricsIntervalId = null;
+        let pageLyricsScrollTimeout = null;
+        let disableLyricAutoScroll = false;
+        const commentForm = document.getElementById('comment-form');
+        const commentTextarea = document.getElementById('comment-text');
+        const submitCommentBtn = document.getElementById('submit-comment-btn');
+        const commentsListDiv = document.getElementById('comments-list');
+        const songId = {{ song.id }};
+
+        if (commentTextarea) {
+            commentTextarea.addEventListener('focus', () => {
+                console.log("[Interaction] Comment textarea focused. DISABLING auto-scroll.");
+                disableLyricAutoScroll = true;
+            });
+            commentTextarea.addEventListener('input', () => {
+                 if (!disableLyricAutoScroll) {
+                     console.log("[Interaction] Comment textarea input. DISABLING auto-scroll.");
+                     disableLyricAutoScroll = true;
+                 }
+            });
+        }
+
+        // --- HÀM XỬ LÝ CLICK LỜI ---
+        function handleLyricClick(time) {
+            console.log(`[Lyric Click] Click detected. Attempting seek to: ${time}`);
+            const globalAudioPlayer = window.globalAudioPlayer;
+
+            console.log(`[Lyric Click] Player object:`, globalAudioPlayer);
+            if (globalAudioPlayer) {
+                console.log(`[Lyric Click] Player readyState: ${globalAudioPlayer.readyState}`);
+                console.log(`[Lyric Click] Player duration: ${globalAudioPlayer.duration}`);
+                console.log(`[Lyric Click] Player paused: ${globalAudioPlayer.paused}`);
+                console.log(`[Lyric Click] Player src: ${globalAudioPlayer.currentSrc}`);
+            } else {
+                console.error("[Lyric Click] window.globalAudioPlayer is null or undefined!");
+                if(typeof showToast === 'function') showToast("Lỗi: Không tìm thấy trình phát nhạc.", "error");
+                return;
+            }
+
+            if (isNaN(time) || time < 0) {
+                console.warn(`[Lyric Click] Invalid time value received: ${time}`);
+                if(typeof showToast === 'function') showToast("Lỗi: Thời gian lời bài hát không hợp lệ.", "error");
+                return;
+            }
+
+            
+            if (globalAudioPlayer.readyState >= 1 && globalAudioPlayer.duration && globalAudioPlayer.duration > 0) {
+                 if (time <= globalAudioPlayer.duration) {
+                     try {
+                         console.log(`[Lyric Click] Conditions met. Seeking player to ${time}.`);
+                         disableLyricAutoScroll = false;
+                         console.log("[Lyric Click] Set disableLyricAutoScroll = false.");
+                         globalAudioPlayer.currentTime = time; // Tua nhạc
+
+                         if (globalAudioPlayer.paused) {
+                             console.log("[Lyric Click] Player was paused, attempting to play.");
+                             globalAudioPlayer.play().catch(e => console.error("[Lyric Click] Error playing after seek:", e));
+                         }
+
+                         if (document.activeElement === commentTextarea) {
+                             commentTextarea?.blur();
+                             console.log("[Lyric Click] Blurred comment textarea.");
+                         }
+                     } catch (e) {
+                         console.error("[Lyric Click] Error during seek operation:", e);
+                         if(typeof showToast === 'function') showToast("Lỗi khi tua bài hát.", "error");
+                     }
+                 } else {
+                      console.warn(`[Lyric Click] Seek time (${time}) is beyond duration (${globalAudioPlayer.duration}). Cannot seek.`);
+                      if(typeof showToast === 'function') showToast("Không thể tua vượt quá thời lượng bài hát.", "warning");
+                 }
+            } else {
+                 console.warn(`[Lyric Click] Cannot seek. Player not ready (readyState: ${globalAudioPlayer.readyState}) or duration invalid (${globalAudioPlayer.duration}).`);
+                 if(typeof showToast === 'function') showToast("Trình phát chưa sẵn sàng để tua.", "warning");
+            }
+        }
+        // --- KẾT THÚC HÀM XỬ LÝ CLICK LỜI ---
+
+        if (lyricsContainer && typeof IntersectionObserver !== 'undefined') {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.5 };
+            const observerCallback = (entries) => {
+                entries.forEach(entry => {
+                    const lyricsAreVisible = entry.isIntersecting;
+                    const commentBoxHasFocus = (document.activeElement === commentTextarea);
+                    if (lyricsAreVisible) {
+                        if (!commentBoxHasFocus) {
+                            if (disableLyricAutoScroll) { disableLyricAutoScroll = false; console.log("[Observer] Lyrics visible & comment box NOT focused. ENABLING auto-scroll.");}
+                        } else {
+                            if (!disableLyricAutoScroll) { disableLyricAutoScroll = true; console.log("[Observer] Lyrics visible BUT comment box IS focused. Re-DISABLING auto-scroll.");}
+                        }
+                    } else {
+                        if (!disableLyricAutoScroll) { disableLyricAutoScroll = true; console.log("[Observer] Lyrics not visible. DISABLING auto-scroll.");}
+                    }
+                });
+            };
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+            observer.observe(lyricsContainer);
+        } else {
+             console.warn("Intersection Observer not supported or lyrics container not found.");
+        }
+
+        function createCommentElementHTML(commentData) {
+            const authorName = escapeHTML(commentData.author.name_display || commentData.author.username);
+            const authorUsernameRaw = commentData.author?.username; const authorUsername = escapeHTML(authorUsernameRaw || '');
+            const authorAvatar = escapeHTML(commentData.author.avatar_url || "{{ url_for('static', filename='img/avatars/default_avatar.png') }}");
+            const commentText = escapeHTML(commentData.text); const profileUrl = `/user/${authorUsername}`;
+            let formattedTimestamp = '';
+            try { const date = new Date(commentData.timestamp); const hours = date.getHours().toString().padStart(2, '0'); const minutes = date.getMinutes().toString().padStart(2, '0'); const day = date.getDate().toString().padStart(2, '0'); const month = (date.getMonth() + 1).toString().padStart(2, '0'); const year = date.getFullYear(); formattedTimestamp = `${hours}:${minutes} ${day}/${month}/${year}`; } catch (e) { formattedTimestamp = commentData.timestamp; }
+            const commentHtmlString = `<div class="comment-item flex items-start space-x-3 bg-[#181818] p-3 rounded animate-fade-in"><a href="${profileUrl}"> <img src="${authorAvatar}" alt="Avatar ${authorName}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/avatars/default_avatar.png') }}';"> </a><div class="flex-grow"><p class="text-sm"> <a href="${profileUrl}" class="font-semibold text-white hover:underline">${authorName}</a> <span class="text-xs text-gray-400 ml-2">${formattedTimestamp}</span> </p><p class="mt-1 text-gray-300">${commentText}</p></div></div>`; return commentHtmlString;
+        }
+
+        if (commentForm && commentTextarea && submitCommentBtn && commentsListDiv) {
+            commentForm.addEventListener('submit', function(event) {
+                event.preventDefault(); const commentText = commentTextarea.value.trim(); if (!commentText) { if(typeof showToast === 'function') showToast('Vui lòng nhập nội dung bình luận.', 'warning'); return; }
+                fetch(`/api/song/${songId}/comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: commentText })})
+                .then(response => { if (!response.ok) { return response.json().then(errData => { throw new Error(errData.message || `Lỗi ${response.status}`); }).catch(() => { throw new Error(`Lỗi HTTP ${response.status}`); }); } return response.json(); })
+                .then(data => { if (data.status === 'success' && data.comment) { if(typeof showToast === 'function') showToast(data.message || 'Đã gửi bình luận!', 'success'); commentTextarea.value = ''; const newCommentHtml = createCommentElementHTML(data.comment); const noCommentMessage = commentsListDiv.querySelector('.empty-comment-message'); if (noCommentMessage) { noCommentMessage.remove(); } commentsListDiv.insertAdjacentHTML('afterbegin', newCommentHtml); const commentCountElement = document.getElementById('comments-count'); if(commentCountElement){ const currentCount = parseInt(commentCountElement.textContent || '0', 10); commentCountElement.textContent = currentCount + 1; }} else { if(typeof showToast === 'function') showToast(data.message || 'Lỗi gửi bình luận.', 'error'); }})
+                .catch(error => { console.error('Error submitting comment:', error); if(typeof showToast === 'function') showToast(`Lỗi: ${error.message}`, 'error'); })
+                .finally(() => {});
+            });
+        }
+
+        if (lyricsContainer && lyricsDataScript) {
+            try {
+                const rawLyrics = JSON.parse(lyricsDataScript.textContent || 'null');
+                if (rawLyrics) {
+                    pageParsedLyrics = parseLRC(rawLyrics);
+                    if (pageParsedLyrics.length > 0) {
+                        renderLyrics(pageParsedLyrics, lyricsContainer, handleLyricClick);
+                        startLyricsSync();
+                    } else {
+                        lyricsContainer.innerHTML = `<pre class="whitespace-pre-wrap text-center">${escapeHTML(rawLyrics)}</pre>`;
+                        lyricsContainer.classList.remove('text-left'); lyricsContainer.classList.add('text-center');
+                    }
+                } else if (!lyricsContainer.querySelector('p')) {
+                    lyricsContainer.innerHTML = '<p class="text-gray-400 italic text-center">Bài hát này chưa có lời.</p>';
+                     lyricsContainer.classList.remove('text-left'); lyricsContainer.classList.add('text-center');
+                }
+            } catch (e) {
+                lyricsContainer.innerHTML = '<p class="text-red-500 text-center">Lỗi hiển thị lời bài hát.</p>';
+                 lyricsContainer.classList.remove('text-left'); lyricsContainer.classList.add('text-center');
+            }
+        }
+
+        function startLyricsSync() {
+            if (lyricsIntervalId) clearInterval(lyricsIntervalId); lyricsIntervalId = setInterval(() => { const player = window.globalAudioPlayer; const currentPlayingId = window.currentSongId; if (player && parseInt(currentPlayingId) === parseInt(songIdOnPage) && !player.paused && player.duration > 0) { highlightPageLyric(player.currentTime); }}, 250);
+        }
+
+        function highlightPageLyric(currentTime) {
+            if (!lyricsContainer || pageParsedLyrics.length === 0) return; let newIndex = -1; for (let i = pageParsedLyrics.length - 1; i >= 0; i--) { if (pageParsedLyrics[i].time <= currentTime + 0.2) { newIndex = i; break; }};
+            if (newIndex !== pageCurrentLyricIndex) { const oldLine = lyricsContainer.querySelector(`.lyric-line.active-lyric`); if (oldLine) oldLine.classList.remove('active-lyric', 'text-green-500', 'font-semibold', 'scale-105'); if (newIndex !== -1) { const newLine = lyricsContainer.querySelector(`.lyric-line[data-index="${newIndex}"]`); if (newLine) { newLine.classList.add('active-lyric', 'text-green-500', 'font-semibold', 'scale-105');
+                        clearTimeout(pageLyricsScrollTimeout); pageLyricsScrollTimeout = setTimeout(() => { if (lyricsContainer.scrollHeight > lyricsContainer.clientHeight && newLine.classList.contains('active-lyric') && !disableLyricAutoScroll) { newLine.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }, 150);
+            }}; pageCurrentLyricIndex = newIndex; }
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (lyricsIntervalId) { clearInterval(lyricsIntervalId); }
+        });
+
+    });
+</script>
+<style>
+    .lyric-scroll-container .lyric-line.active-lyric { color: #1DB954 !important; opacity: 1; transform: scale(1.05); background-color: rgba(255, 255, 255, 0.05); }
+    .lyric-scroll-container .lyric-line { opacity: 0.6; }
+     .lyric-scroll-container .lyric-line:not(.active-lyric):hover { opacity: 0.9; background-color: rgba(255, 255, 255, 0.03); }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fade-in 0.5s ease-out; }
+    .comment-item { }
+</style>
+{% endblock %}

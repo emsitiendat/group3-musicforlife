@@ -1,0 +1,302 @@
+
+/* ---- Nền và Chữ Chính ---- */
+html.light body {
+    background-color: #f0f2f5; 
+    color: #191919;
+}
+html.light ::-webkit-scrollbar-track { background: #e9ecef; }
+html.light ::-webkit-scrollbar-thumb { background-color: #ced4da; border-color: #e9ecef;}
+html.light ::-webkit-scrollbar-thumb:hover { background-color: #adb5bd; }
+
+/* ---- Sidebar ---- */
+html.light aside {
+    background-color: #ffffff;
+    color: #303030; 
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+html.light aside nav a {
+    color: #303030;
+}
+html.light aside nav a:hover {
+    color: #000000;
+    background-color: #f0f0f0; 
+}
+html.light aside nav a.text-white { 
+    color: #1DB954 !important; 
+    font-weight: 600;
+    background-color: #e6f7f0; 
+}
+html.light aside h1 {
+    color: #000000;
+}
+
+
+/* ---- Top Bar ---- */
+html.light div.bg-gradient-to-b.from-\[\#222\].to-\[\#121212\] {
+    background-image: linear-gradient(to bottom, #ffffff, #f5f5f5) !important; 
+    color: #191919 !important;
+    border-bottom: 1px solid #e0e0e0 !important; 
+}
+/* Tên user ở Top Bar */
+html.light span.text-white[title="Xem hồ sơ của bạn"],
+html.light a.text-sm.font-semibold.text-white[title="Xem hồ sơ của bạn"],
+html.light span.text-black a.hover\:underline {
+     color: #050505 !important;
+}
+html.light a.text-sm.font-semibold.text-white[title="Xem hồ sơ của bạn"]:hover {
+    color: #1DB954 !important; 
+    text-decoration: underline;
+}
+/* Input search */
+html.light #top-search-input {
+    background-color: #f0f0f0 !important; 
+    color: #050505 !important;
+    border: 1px solid #d9d9d9 !important;
+}
+html.light #top-search-input::placeholder {
+    color: #505050 !important;
+}
+
+
+/* ---- Nội dung chính (Cards, Items, Sections) ---- */
+html.light #main-content h1, html.light #main-content h2, html.light #main-content h3,
+html.light h1.text-3xl.font-bold.text-white,
+html.light h2.text-2xl.font-semibold.text-white,
+html.light h1.text-3xl.font-bold.text-white {
+   color: #050505;
+}
+html.light p.text-gray-400 { /* Text mô tả dưới tiêu đề */
+    color: #505050;
+}
+
+/* Ghi đè cho các khối/card */
+html.light .bg-\[\#181818\], html.light .bg-black {
+  background-color: #ffffff !important;
+  color: #191919 !important;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+/* Text trong các card/khối này */
+html.light .bg-\[\#181818\] .text-white, html.light .bg-black .text-white {
+    color: #050505 !important;
+}
+html.light .bg-\[\#181818\] .text-gray-300, html.light .bg-black .text-gray-300,
+html.light .bg-\[\#181818\] .text-gray-400, html.light .bg-black .text-gray-400 {
+    color: #303030 !important; /* Đậm hơn */
+}
+/* Hover cho card */
+html.light .hover\:bg-\[\#282828\]:hover {
+   background-color: #f5f5f5 !important;
+}
+/* Link màu xanh lá trong card/section */
+html.light .bg-\[\#181818\] .text-green-400, html.light .bg-black .text-green-400 {
+    color: #1DB954 !important; 
+}
+html.light .bg-\[\#181818\] .text-green-400:hover, html.light .bg-black .text-green-400:hover {
+    color: #1aa34a !important; 
+}
+
+/* Danh sách bài hát (Trang chủ, Playlist Detail, Artist Detail) */
+html.light .song-list-container .playable-song-item .text-white { /* Tên bài hát */
+    color: #050505 !important;
+}
+html.light .song-list-container .playable-song-item .text-gray-400 { /* Tên nghệ sĩ */
+    color: #303030 !important;
+}
+html.light .song-list-container .playable-song-item .text-gray-500 { /* Lượt thích/nghe */
+    color: #505050 !important;
+}
+/* Hover tên bài hát trong danh sách */
+html.light .song-list-container .playable-song-item:hover .text-white, /* Khi hover cả item */
+html.light .song-list-container .playable-song-item .group-hover\:text-\[\#1DB954\]:hover { /* Khi hover text có class này */
+   color: #1DB954 !important; 
+}
+
+
+/* ---- Footer Player ---- */
+html.light footer#player-footer.bg-\[\#181818\] {
+   background-color: #f5f5f5 !important; 
+   border-top: 1px solid #dcdcdc !important;
+   color: #303030 !important;
+}
+html.light #footer-song-title {
+   color: #050505 !important;
+}
+html.light #footer-song-artist {
+   color: #303030 !important;
+}
+html.light #footer-current-time, html.light #footer-total-duration {
+  color: #505050 !important;
+}
+/* Các nút icon trong footer */
+html.light #footer-like-button,
+html.light footer button[title="Shuffle"], /* Icon Shuffle mặc định */
+html.light footer button[title="Previous"],
+html.light footer button[title="Next"],
+html.light footer button[title="Repeat"],   /* Icon Repeat mặc định */
+html.light footer button[title="Lời bài hát"],
+html.light footer button[title="Hàng đợi"],
+html.light #footer-mute-button {
+   color: #505050 !important; 
+}
+html.light #footer-like-button:hover,
+html.light footer button[title="Shuffle"]:hover,
+html.light footer button[title="Previous"]:hover,
+html.light footer button[title="Next"]:hover,
+html.light footer button[title="Repeat"]:hover,
+html.light #footer-mute-button:hover {
+   color: #050505 !important; 
+}
+
+/* Trạng thái active cho Shuffle và Repeat */
+html.light footer button[title="Shuffle"].active-control, 
+html.light footer button[title="Repeat"].active-control,
+html.light footer button[title="Shuffle"].text-green-500, 
+html.light footer button[title="Repeat"].text-green-500 {
+    color: #1DB954 !important;
+}
+
+html.light footer button[title="Shuffle"].active-control svg,
+html.light footer button[title="Repeat"].active-control svg,
+html.light footer button[title="Shuffle"].text-green-500 svg,
+html.light footer button[title="Repeat"].text-green-500 svg {
+    fill: #1DB954 !important; 
+    color: #1DB954 !important; 
+}
+
+/* Nút Play/Pause chính */
+html.light #footer-play-pause-button {
+   background-color: #191919 !important;
+   color: #ffffff !important;
+}
+html.light #footer-play-pause-button:hover {
+   background-color: #000000 !important;
+}
+html.light .user-profile-header h1.text-4xl, html.light .user-profile-header h1.text-6xl {
+    color: #050505 !important;
+}
+html.light .user-profile-header p.text-gray-400 { /* @username */
+    color: #303030 !important;
+}
+html.light .user-profile-header p.text-gray-300 { /* Bio */
+    color: #191919 !important;
+}
+html.light .user-profile-header p.text-sm.text-gray-500 { /* Ngày tham gia */
+    color: #505050 !important;
+}
+/* Số lượng "Đang theo dõi", "Người theo dõi" */
+html.light .user-profile-stats strong#following-count,
+html.light .user-profile-stats strong#followers-count {
+    color: #050505 !important; 
+    font-weight: 600; 
+}
+html.light .user-profile-stats span.text-gray-400 { /* Chữ "Đang theo dõi", "Người theo dõi" */
+    color: #303030 !important; 
+}
+/* Danh sách User (Đang theo dõi, Người theo dõi) */
+html.light .user-list-item {
+    border-bottom: 1px solid #f0f0f0;
+}
+html.light .user-list-item:hover {
+    background-color: #f5f5f5 !important;
+}
+html.light .user-list-item .text-white { /* Tên user trong danh sách */
+    color: #050505 !important; 
+    font-weight: 500; 
+}
+html.light .user-list-item .text-gray-400 { /* @username trong danh sách */
+    color: #505050 !important; 
+}
+/* Khi hover vào tên user trong danh sách */
+html.light .user-list-item a:hover .text-white {
+    color: #1DB954 !important;
+}
+html.light .user-list-item button.text-gray-400:hover {
+    color: #e60023 !important; 
+}
+
+
+/* Container chính của form */
+html.light .account-section.bg-\[\#181818\],
+html.light .edit-profile-container.bg-\[\#181818\] {
+   background-color: #ffffff !important;
+   border: 1px solid #e0e0e0;
+   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+/* Tiêu đề */
+html.light .account-section h2.text-2xl.font-bold.text-white,
+html.light .edit-profile-container h1.text-2xl.font-bold.text-white {
+    color: #050505 !important;
+}
+/* Labels của input */
+html.light .account-section label.text-gray-300,
+html.light .edit-profile-container label.text-gray-300 {
+  color: #303030 !important; 
+}
+
+html.light .account-section input[type="password"].bg-gray-900,
+html.light .account-section input[type="password"],
+html.light .edit-profile-container input[type="text"].bg-gray-900,
+html.light .edit-profile-container textarea.bg-gray-900,
+html.light .edit-profile-container select.bg-gray-900,
+html.light .edit-profile-container input[type="text"],
+html.light .edit-profile-container textarea,
+html.light .edit-profile-container select {
+  background-color: #f0f0f0 !important; 
+  border: 1px solid #cccccc !important; 
+  color: #050505 !important; 
+  border-radius: 0.3rem; 
+}
+html.light .edit-profile-container input[type="file"] {
+    color: #303030 !important; 
+}
+html.light .account-section input::placeholder,
+html.light .edit-profile-container input::placeholder,
+html.light .edit-profile-container textarea::placeholder {
+  color: #505050 !important; 
+}
+
+html.light .account-section input:focus,
+html.light .edit-profile-container input:focus,
+html.light .edit-profile-container textarea:focus,
+html.light .edit-profile-container select:focus {
+  border-color: #1DB954 !important; 
+  box-shadow: 0 0 0 0.2rem rgba(29, 185, 84, 0.25) !important; 
+}
+
+html.light .account-section input[type="submit"].bg-\[\#1DB954\],
+html.light .edit-profile-container input[type="submit"].bg-\[\#1DB954\] {
+   background-color: #1DB954 !important; 
+   color: #ffffff !important;
+}
+html.light .account-section input[type="submit"].bg-\[\#1DB954\]:hover,
+html.light .edit-profile-container input[type="submit"].bg-\[\#1DB954\]:hover {
+   background-color: #1aa34a !important; 
+}
+
+.button-loading::after {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.5em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: button-spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+button:disabled, a:disabled {
+  opacity: 0.7;
+  cursor: not-allowed !important;
+}
+.password-toggle-button {
+    z-index: 10;
+}

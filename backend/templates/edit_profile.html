@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-[#181818] p-8 rounded-lg shadow-lg">
+    <h1 class="text-2xl font-bold text-white mb-6">Chỉnh sửa Hồ sơ</h1>
+
+    {# Thêm enctype nếu có upload file avatar #}
+    <form method="POST" action="{{ url_for('edit_profile') }}" novalidate enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <div class="space-y-4">
+            {# Tên hiển thị #}
+            <div>
+                <label for="display_name" class="block text-sm font-medium text-gray-300 mb-1">{{ form.display_name.label }}</label>
+                {{ form.display_name(class="block w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm", placeholder="Tên bạn muốn hiển thị") }}
+                {% if form.display_name.errors %}
+                    <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.display_name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+            {# Giới thiệu #}
+            <div>
+                <label for="bio" class="block text-sm font-medium text-gray-300 mb-1">{{ form.bio.label }}</label>
+                {{ form.bio(rows=4, class="block w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm", placeholder="Viết vài điều về bạn...") }}
+                 {% if form.bio.errors %}
+                    <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.bio.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+           </div>
+
+            {# Chế độ hiển thị #}
+            <div>
+                <label for="profile_visibility" class="block text-sm font-medium text-gray-300 mb-1">{{ form.profile_visibility.label }}</label>
+                {{ form.profile_visibility(class="block w-full rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm") }}
+                {% if form.profile_visibility.errors %}
+                    <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.profile_visibility.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                {% endif %}
+            </div>
+
+             {# Avatar Upload #}
+ 
+            <div class="flex items-center space-x-4">
+                 {# Hiển thị avatar hiện tại #}
+                 <img src="{{ current_avatar }}"
+                      onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/avatars/default_avatar.png') }}';"
+                      alt="Avatar hiện tại" class="w-16 h-16 rounded-full object-cover border-2 border-gray-600">
+                 {# Input chọn file mới #}
+                 <div class="flex-grow">
+                     <label for="avatar" class="block text-sm font-medium text-gray-300 mb-1">{{ form.avatar.label }}</label>
+                     {# Style cho input file #}
+                     {{ form.avatar(id="avatar", class="block w-full text-sm text-gray-400 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-900") }}
+                     {% if form.avatar.errors %}
+                         <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.avatar.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                     {% endif %}
+                 </div>
+             </div>
+            
+
+            {# Submit Button #}
+            <div class="pt-4">
+                 {{ form.submit(class="w-full flex justify-center rounded-full border border-transparent bg-[#1DB954] py-2 px-4 text-sm font-bold text-black hover:bg-[#1ED760] focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer uppercase tracking-wider") }}
+            </div>
+        </div>
+    </form>
+
+    <div class="text-sm text-center mt-6">
+        <a href="{{ url_for('user_profile', username=current_user.username) }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+             &larr; Quay lại hồ sơ
+        </a>
+        <span class="text-gray-600 mx-2">|</span>
+        <a href="{{ url_for('account') }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+             Quản lý tài khoản
+        </a>
+    </div>
+</div>
+{% endblock %}

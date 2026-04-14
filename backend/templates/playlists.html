@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block content %}
+{# --- Tiêu đề và các nút ở trên cùng --- #}
+<div class="mb-8 space-y-4">
+    {# Hàng 1: Tiêu đề và nút tạo #}
+    <div class="flex flex-wrap justify-between items-center gap-4">
+        <h1 class="text-3xl font-bold text-white">Danh Sách Phát Của Tôi</h1>
+        <div class="flex items-center space-x-2 flex-shrink-0">
+            <button id="list-view-btn" title="Chế độ danh sách" class="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-500 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg></button>
+            <button id="grid-view-btn" title="Chế độ lưới" class="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-500 transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg></button>
+            <a href="{{ url_for('create_playlist') }}"
+               title="Tạo playlist mới"
+               class="p-2 rounded-full text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-150 ease-in-out ml-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                <span class="sr-only">Tạo Playlist Mới</span>
+            </a>
+        </div>
+    </div>
+    {# Hàng 2: Filters, Search, Sort #}
+    <div class="flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center space-x-2" id="privacy-filter-buttons">
+            <a href="{{ url_for('playlists', privacy='all', search=current_search, sort=current_sort) }}"
+               class="px-3 py-1 rounded-full text-xs font-semibold transition {% if current_privacy == 'all' %} bg-white text-black {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+                Tất cả
+            </a>
+            <a href="{{ url_for('playlists', privacy='public', search=current_search, sort=current_sort) }}"
+               class="px-3 py-1 rounded-full text-xs font-semibold transition {% if current_privacy == 'public' %} bg-white text-black {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+                Công khai
+            </a>
+            <a href="{{ url_for('playlists', privacy='private', search=current_search, sort=current_sort) }}"
+               class="px-3 py-1 rounded-full text-xs font-semibold transition {% if current_privacy == 'private' %} bg-white text-black {% else %} bg-gray-700 text-gray-300 hover:bg-gray-600 {% endif %}">
+                Riêng tư <span class="ml-1">🔒</span>
+            </a>
+        </div>
+        <form method="GET" action="{{ url_for('playlists') }}" class="flex items-center gap-2" id="search-sort-form">
+            <input type="hidden" name="privacy" value="{{ current_privacy }}">
+            <div class="relative">
+                <input type="search" name="search" id="playlist-search-input"
+                       value="{{ current_search }}" placeholder="Tìm theo tên playlist..."
+                       class="block w-48 sm:w-64 rounded-full border-0 bg-[#2a2a2a] py-1.5 pl-4 pr-10 text-sm text-gray-300 ring-1 ring-inset ring-transparent placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-white sm:leading-6">
+                <button type="submit" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white" title="Tìm kiếm">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                </button>
+            </div>
+            <select name="sort" id="playlist-sort-select"
+                    onchange="document.getElementById('search-sort-form').submit();"
+                    class="rounded-full border-0 bg-[#2a2a2a] py-1.5 pl-3 pr-8 text-sm text-gray-300 ring-1 ring-inset ring-transparent focus:ring-2 focus:ring-inset focus:ring-white sm:leading-6 appearance-none cursor-pointer">
+                <option value="date_new" {% if current_sort == 'date_new' %}selected{% endif %}>Mới nhất</option>
+                <option value="date_old" {% if current_sort == 'date_old' %}selected{% endif %}>Cũ nhất</option>
+                <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+                <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Tên Z-A</option>
+            </select>
+        </form>
+    </div>
+</div>
+
+
+{% if playlists_data %}
+    {# Định nghĩa các biến helper cho ảnh/icon mặc định #}
+    {% set default_cover_placeholder_url = url_for('static', filename='img/covers/default_cover.png') %}
+    {% set default_empty_playlist_image_url = url_for('static', filename='img/covers/default_empty_playlist.png') %}
+    {% set default_icon_svg_list %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-8 h-8 text-gray-500"><path fill-rule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A.5.5 0 0 0 5 7.5h6a.5.5 0 0 0 .5-.5V4.5A3.5 3.5 0 0 0 8 1Zm2 6H6V4.5a2 2 0 1 1 4 0V7ZM2.5 9A1.5 1.5 0 0 0 1 10.5v3A1.5 1.5 0 0 0 2.5 15h11A1.5 1.5 0 0 0 15 13.5v-3A1.5 1.5 0 0 0 13.5 9h-11Z" clip-rule="evenodd" /></svg>{% endset %}
+    {% set default_icon_svg_grid %}<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="w-10 h-10 text-gray-500"><path fill-rule="evenodd" d="M8 1a3.5 3.5 0 0 0-3.5 3.5V7A.5.5 0 0 0 5 7.5h6a.5.5 0 0 0 .5-.5V4.5A3.5 3.5 0 0 0 8 1Zm2 6H6V4.5a2 2 0 1 1 4 0V7ZM2.5 9A1.5 1.5 0 0 0 1 10.5v3A1.5 1.5 0 0 0 2.5 15h11A1.5 1.5 0 0 0 15 13.5v-3A1.5 1.5 0 0 0 13.5 9h-11Z" clip-rule="evenodd" /></svg>{% endset %}
+
+    {# --- Wrapper cho cả 2 chế độ view --- #}
+    <div id="playlist-views-wrapper">
+
+        {# --- KHUNG CHỨA DẠNG DANH SÁCH (List View) --- #}
+        <div id="playlist-list-view" class="space-y-0"> 
+
+            {# --- HEADER CHO LIST VIEW --- #}
+            <div class="hidden md:grid grid-cols-[auto_1fr_auto_auto_auto] gap-x-4 px-3 py-2 border-b border-gray-700 text-xs text-gray-400 uppercase tracking-wider mb-2">
+                <div class="w-12 mr-3 text-right">#</div> {# Hoặc để trống nếu không muốn #}
+                <div>Tiêu đề</div>
+                <div class="text-center">Số bài hát</div>
+                <div class="text-center">Ngày tạo</div>
+                <div class="text-right mr-2">Tùy chọn</div> {# Căn phải cho khớp nút #}
+            </div>
+            {# --- KẾT THÚC HEADER --- #}
+
+            {# --- Vòng lặp Playlist Items (Sử dụng Grid) --- #}
+            {% for item in playlists_data %}
+                {% set playlist = item.playlist %}
+                {% set covers = item.covers %}
+                {% set song_count = item.song_count %}
+
+                {# Div item chính sử dụng Grid #}
+                <div class="playlist-card grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-x-4 py-2 px-3 rounded-lg hover:bg-[#282828] transition duration-200 ease-in-out group relative" data-playlist-id="{{ playlist.id }}">
+
+                    {# Cột 1: Ảnh bìa #}
+                    <div class="playlist-cover-container w-12 h-12 flex-shrink-0 relative overflow-hidden rounded-sm shadow-sm bg-gray-700 flex items-center justify-center">
+                        {# --- Logic hiển thị ảnh bìa --- #}
+                        {% if playlist.custom_cover_path %}
+                            <img src="{{ url_for('static', filename=playlist.custom_cover_path) }}" alt="Ảnh bìa playlist {{ playlist.name }}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';">
+                        {% elif song_count >= 4 and covers and covers|length >= 4 %}
+                            <div class="grid grid-cols-2 grid-rows-2 w-full h-full">{% for i in range(4) %}<div class="w-full h-full bg-gray-600">{% if covers[i] is defined and covers[i] %}<img src="{{ url_for('static', filename=covers[i]) }}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.style.visibility='hidden';">{% endif %}</div>{% endfor %}</div>
+                        {% elif covers and covers[0] %}
+                            <img src="{{ url_for('static', filename=covers[0]) }}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';">
+                        {% elif song_count == 0 %}
+                            <img src="{{ default_empty_playlist_image_url }}" alt="Playlist trống" class="w-full h-full object-cover opacity-75">
+                        {% else %}
+                            <div class="p-2 flex items-center justify-center w-full h-full">{{ default_icon_svg_list|safe }}</div>
+                        {% endif %}
+                         {# --- Kết thúc logic ảnh bìa --- #}
+                    </div>
+
+                    {# Cột 2: Tên Playlist và Người tạo #}
+                    <div class="min-w-0">
+                        <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}" class="block text-white font-semibold truncate group-hover:text-[#1DB954] group-hover:underline" title="{{ playlist.name }}">
+                             <span>{{ playlist.name }}</span>
+                             {# Icon khóa nếu là private #}
+                             {% if not playlist.is_public %}
+                                <span class="ml-1.5 text-gray-500 shrink-0 inline-block align-middle" title="Playlist riêng tư">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"> <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /> </svg>
+                                </span>
+                             {% endif %}
+                        </a>
+                        <div class="text-gray-400 text-xs truncate mt-0.5">
+                             <a href="{{ url_for('user_profile', username=playlist.owner.username) }}" class="hover:underline hover:text-gray-300">{{ playlist.owner.name_display }}</a>
+                        </div>
+                    </div>
+
+                    {# Cột 3: Số bài hát #}
+                    <div class="text-sm text-gray-400 mr-6">
+                        {{ song_count }}
+                    </div>
+
+                    {# Cột 4: Ngày tạo (Ẩn trên mobile mặc định) #}
+                    <div class="text-sm text-gray-400 justify-self-center hidden md:block mr-9">
+                        {{ playlist.created_at.strftime('%d/%m/%Y') }}
+                    </div>
+
+                    {# Cột 5: Nút Tùy chọn #}
+                    <div class="flex-shrink-0 relative justify-self-end"> {# Căn phải nút ... #}
+                        <button class="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 list-menu-trigger" data-target-menu="list-menu-{{ playlist.id }}" title="Tùy chọn cho {{ playlist.name }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
+                        </button>
+                        {# Menu dropdown #}
+                        <div id="list-menu-{{ playlist.id }}" class="hidden absolute top-full right-0 mt-1 w-48 bg-[#282828] rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 list-menu-content">
+                           <div class="py-1" role="menu" aria-orientation="vertical">
+                                <button type="button"
+                                    class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-600 pin-playlist-btn {% if item.playlist.is_pinned %}text-yellow-400 hover:text-yellow-300{% else %}text-gray-300 hover:text-white{% endif %}"
+                                    role="menuitem"
+                                    data-playlist-id="{{ item.playlist.id }}"
+                                    data-is-pinned="{{ item.playlist.is_pinned|lower }}">
+                                    {% if item.playlist.is_pinned %}
+                                        <span class="pin-icon inline-flex items-center mr-2">📌</span>Bỏ ghim playlist
+                                    {% else %}
+                                        <span class="pin-icon inline-flex items-center mr-2">📌</span>Ghim playlist
+                                    {% endif %}
+                                </button>
+                                <a href="{{ url_for('edit_playlist', playlist_id=playlist.id) }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white" role="menuitem">Sửa chi tiết</a>
+
+                                <form action="{{ url_for('delete_playlist', playlist_id=playlist.id) }}" method="POST" class="block" role="menuitem">
+                                    <button type="submit" onclick="return confirm('Bạn có chắc chắn muốn xóa playlist \'{{ playlist.name|escape }}\'?'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 hover:text-red-300">Xóa playlist</button>
+                                </form>
+                            </div>
+                        </div>
+                         {# --- Kết thúc menu dropdown --- #}
+                    </div>
+
+                    {# Chỉ báo đã ghim (Vẫn dùng absolute) #}
+                    {% if playlist.is_pinned %}
+                    <span class="pinned-indicator absolute top-1 left-1 text-yellow-400 z-10" title="Đã ghim">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clip-rule="evenodd" /></svg>
+                    </span>
+                    {% endif %}
+
+                </div> {# --- Kết thúc Grid Item --- #}
+            {% endfor %} {# --- Kết thúc vòng lặp for --- #}
+        </div> {# --- Kết thúc #playlist-list-view --- #}
+
+        {# --- KHUNG CHỨA DẠNG LƯỚI (Grid View) --- #}
+        <div id="playlist-grid-view" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+            {% for item in playlists_data %}
+                
+                {% set playlist = item.playlist %}
+                {% set covers = item.covers %}
+                {% set song_count = item.song_count %}
+                <div class="playlist-card bg-[#181818] p-4 rounded-lg shadow-lg hover:bg-[#282828] transition duration-200 ease-in-out group relative" data-playlist-id="{{ playlist.id }}">
+                    {% if item.playlist.is_pinned %}
+                    <span class="pinned-indicator absolute top-2 left-2 text-yellow-400 z-10" title="Đã ghim">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+  <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clip-rule="evenodd" />
+</svg>                    </span>
+                    {% endif %}
+                    <a href="{{ url_for('playlist_detail', playlist_id=playlist.id) }}" class="block text-decoration-none mb-2">
+    <div class="playlist-cover-container w-full h-auto mb-3 aspect-square relative overflow-hidden rounded-md shadow-lg bg-gray-700 flex items-center justify-center">
+         {# --- Logic hiển thị ảnh bìa --- #}
+         {% if playlist.custom_cover_path %}
+             <img src="{{ url_for('static', filename=playlist.custom_cover_path) }}" alt="Ảnh bìa playlist {{ playlist.name }}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';">
+         {% elif song_count >= 4 and covers and covers|length >= 4 %}
+             <div class="grid grid-cols-2 grid-rows-2 w-full h-full">{% for i in range(4) %}<div class="w-full h-full bg-gray-600">{% if covers[i] is defined and covers[i] %}<img src="{{ url_for('static', filename=covers[i]) }}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.style.visibility='hidden';">{% endif %}</div>{% endfor %}</div>
+         {% elif covers and covers[0] %}
+             <img src="{{ url_for('static', filename=covers[0]) }}" alt="" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null; this.src='{{ default_cover_placeholder_url }}';">
+         {% elif song_count == 0 %}
+             <img src="{{ default_empty_playlist_image_url }}" alt="Playlist trống" class="w-full h-full object-cover opacity-75">
+         {% else %}
+             <div class="p-4 flex items-center justify-center w-full h-full">{{ default_icon_svg_grid|safe }}</div>
+         {% endif %}
+         {# --- Kết thúc logic ảnh bìa --- #}
+    </div>
+
+    {# --- BẮT ĐẦU KHỐI TEXT MỚI --- #}
+    <h3 class="text-white font-semibold truncate group-hover:text-[#1DB954] mb-0.5" title="{{ playlist.name }}"> {# Giảm margin bottom #}
+        {{ playlist.name }}
+        {# Icon khóa nếu cần #}
+         {% if not playlist.is_public %} 
+   <span class="ml-1.5 text-gray-500 shrink-0 inline-block align-middle" title="Playlist riêng tư">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4"> <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" /> </svg>
+   </span>
+{% endif %}
+    </h3>
+    </h3>
+<p class="text-gray-400 text-sm truncate"> {# Dòng 2 gộp lại #}
+    <a href="{{ url_for('user_profile', username=playlist.owner.username) }}" class="hover:underline hover:text-gray-300">{{ playlist.owner.name_display }}</a>
+    <span class="text-gray-500 mx-1">•</span> {{ song_count }} bài hát
+</p>
+    {# --- KẾT THÚC KHỐI TEXT MỚI --- #}
+</a>
+                     <button class="absolute top-2 right-2 p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 transition-opacity z-10 grid-menu-trigger" data-target-menu="menu-{{ playlist.id }}" title="Tùy chọn cho {{ playlist.name }}"> <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg> </button>
+                    <div id="menu-{{ playlist.id }}" class="hidden absolute top-8 right-2 mt-1 w-48 bg-[#282828] rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50 grid-menu-content">
+    <div class="py-1" role="menu" aria-orientation="vertical">
+        {# === 1. Ghim/Bỏ ghim (ĐƯA LÊN ĐẦU) === #}
+        <button type="button"
+            class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-600 pin-playlist-btn {% if item.playlist.is_pinned %}text-yellow-400 hover:text-yellow-300{% else %}text-gray-300 hover:text-white{% endif %}"
+            role="menuitem"
+            data-playlist-id="{{ item.playlist.id }}"
+            data-is-pinned="{{ item.playlist.is_pinned|lower }}">
+            <span class="pin-icon inline-flex items-center mr-2">📌
+                {# SVG Ghim (Pushpin) #}
+                
+            </span>
+            {% if item.playlist.is_pinned %}Bỏ ghim playlist{% else %}Ghim playlist{% endif %}
+        </button>
+
+        {# === 2. Sửa chi tiết === #}
+        <a href="{{ url_for('edit_playlist', playlist_id=playlist.id) }}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white" role="menuitem">Sửa chi tiết</a>
+
+        {# === 3. Xóa playlist === #}
+        <form action="{{ url_for('delete_playlist', playlist_id=playlist.id) }}" method="POST" class="block" role="menuitem">
+            <button type="submit" onclick="return confirm('Bạn có chắc chắn muốn xóa playlist \'{{ playlist.name|escape }}\'?'); event.stopPropagation();" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 hover:text-red-300">Xóa playlist</button>
+        </form>
+    </div>
+</div>
+                </div>
+            {% endfor %}
+        </div> {# --- Kết thúc #playlist-grid-view --- #}
+
+    </div> {# --- Kết thúc #playlist-views-wrapper --- #}
+
+{% else %} {# Nếu không có playlist nào #}
+    <p class="text-gray-400 mt-6">
+        {% if current_search %}
+            Không tìm thấy playlist nào khớp với "{{ current_search }}".
+        {% else %}
+            Bạn chưa tạo playlist nào.
+        {% endif %}
+    </p>
+{% endif %} {# Kết thúc if playlists_data #}
+
+{% endblock %}
+
+
+{# --- JAVASCRIPT --- #}
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+   
+    const listViewBtn = document.getElementById('list-view-btn');
+    const gridViewBtn = document.getElementById('grid-view-btn');
+    const listViewContainer = document.getElementById('playlist-list-view');
+    const gridViewContainer = document.getElementById('playlist-grid-view');
+    const VIEW_MODE_KEY = 'playlist_view_mode';
+    const activeClasses = ['bg-gray-700', 'text-white'];
+    const inactiveClasses = ['text-gray-400', 'hover:bg-gray-700', 'hover:text-white'];
+
+
+    const playlistViewsWrapper = document.getElementById('playlist-views-wrapper') || document.body;
+
+    // --- START: Hàm đóng tất cả các menu dropdown (cần thiết cho các logic khác) ---
+    function closeAllPlaylistMenus() {
+        document.querySelectorAll('.list-menu-content.shown, .grid-menu-content.shown').forEach(menu => {
+            menu.classList.remove('shown');
+            menu.classList.add('hidden');
+        });
+    }
+    // --- END: Hàm đóng menu ---
+
+
+    // --- START: Logic chuyển đổi View (List/Grid) ---
+    function setViewMode(mode) {
+        if (!listViewContainer || !gridViewContainer || !listViewBtn || !gridViewBtn) {
+            console.error("Một hoặc nhiều element cho view mode không tìm thấy.");
+            return;
+        }
+        if (typeof closeAllPlaylistMenus === 'function') {
+            closeAllPlaylistMenus();
+        }
+
+        if (mode === 'grid') {
+            listViewContainer.classList.add('hidden');
+            gridViewContainer.classList.remove('hidden');
+            gridViewBtn.classList.remove(...inactiveClasses);
+            gridViewBtn.classList.add(...activeClasses);
+            listViewBtn.classList.remove(...activeClasses);
+            listViewBtn.classList.add(...inactiveClasses);
+            localStorage.setItem(VIEW_MODE_KEY, 'grid');
+        } else { // Mặc định hoặc 'list'
+            gridViewContainer.classList.add('hidden');
+            listViewContainer.classList.remove('hidden');
+            listViewBtn.classList.remove(...inactiveClasses);
+            listViewBtn.classList.add(...activeClasses);
+            gridViewBtn.classList.remove(...activeClasses);
+            gridViewBtn.classList.add(...inactiveClasses);
+            localStorage.setItem(VIEW_MODE_KEY, 'list');
+        }
+    }
+
+    if (listViewBtn) {
+        listViewBtn.addEventListener('click', (e) => { e.preventDefault(); setViewMode('list'); });
+    }
+    if (gridViewBtn) {
+        gridViewBtn.addEventListener('click', (e) => { e.preventDefault(); setViewMode('grid'); });
+    }
+
+    const savedMode = localStorage.getItem(VIEW_MODE_KEY);
+    if (listViewContainer && gridViewContainer && listViewBtn && gridViewBtn) {
+        if (savedMode === 'grid') {
+            gridViewBtn.classList.remove(...inactiveClasses);
+            gridViewBtn.classList.add(...activeClasses);
+            listViewBtn.classList.remove(...activeClasses);
+            listViewBtn.classList.add(...inactiveClasses);
+        } else {
+            listViewBtn.classList.remove(...inactiveClasses);
+            listViewBtn.classList.add(...activeClasses);
+            gridViewBtn.classList.remove(...activeClasses);
+            gridViewBtn.classList.add(...inactiveClasses);
+        }
+        setViewMode(savedMode || 'list'); // Ưu tiên chế độ list nếu chưa lưu
+    }
+    // --- END: Logic chuyển đổi View ---
+
+
+    // --- START: Event Delegation cho các hành động trong playlistViewsWrapper (Pin, Mở Menu) ---
+    if (playlistViewsWrapper) {
+        playlistViewsWrapper.addEventListener('click', function(event) {
+            const pinButton = event.target.closest('.pin-playlist-btn');
+            const triggerButton = event.target.closest('.list-menu-trigger, .grid-menu-trigger');
+            const deleteButtonInsideMenu = event.target.closest('.list-menu-content form button[type="submit"], .grid-menu-content form button[type="submit"]');
+
+            if (pinButton) {
+                event.preventDefault();
+                event.stopPropagation(); // Ngăn không cho event nổi lên làm đóng menu ngay lập tức bởi listener khác
+                const playlistId = pinButton.dataset.playlistId;
+                const isCurrentlyPinned = pinButton.dataset.isPinned === 'true'; // Lấy trạng thái hiện tại
+                const pinIconSpan = pinButton.querySelector('.pin-icon'); // Icon trong nút
+                const playlistCard = playlistViewsWrapper.querySelector(`.playlist-card[data-playlist-id="${playlistId}"]`); // Tìm card tương ứng
+
+               
+
+                fetch(`/api/playlist/${playlistId}/toggle_pin`, {
+                    method: 'POST',
+                   
+                })
+                .then(response => {
+                    // Kiểm tra lỗi HTTP và JSON như trước
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                             try { const errData = JSON.parse(text); throw new Error(errData.message || `Lỗi HTTP: ${response.status} - ${text.substring(0,100)}`); }
+                             catch (e) { console.error("Server returned HTML instead of JSON...", text.substring(0, 100)); throw new Error(`Server trả về lỗi không phải JSON (Mã: ${response.status}).`); }
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        const isNowPinned = data.is_pinned; // Trạng thái mới từ server
+
+                        // 1. Cập nhật dataset cho nút
+                        pinButton.dataset.isPinned = isNowPinned.toString();
+
+                        // 2. Cập nhật Text và Class của nút trong menu
+                        const pinTextNode = pinButton.childNodes[pinButton.childNodes.length - 1]; // Lấy text node cuối cùng
+                        if (pinTextNode && pinTextNode.nodeType === Node.TEXT_NODE) {
+                             pinTextNode.textContent = isNowPinned ? ' Bỏ ghim playlist' : ' Ghim playlist';
+                         }
+                        pinButton.classList.toggle('text-yellow-400', isNowPinned);
+                        pinButton.classList.toggle('hover:text-yellow-300', isNowPinned);
+                        pinButton.classList.toggle('text-gray-300', !isNowPinned);
+                        pinButton.classList.toggle('hover:text-white', !isNowPinned);
+                        
+
+                        // 3. Cập nhật biểu tượng ghim trên Card (List View và Grid View)
+                         const playlistCard = document.querySelector(
+        `#playlist-list-view .playlist-card[data-playlist-id="${playlistId}"], #playlist-grid-view .playlist-card[data-playlist-id="${playlistId}"]`
+    );
+
+    if (playlistCard) {
+        console.log("Found playlist card:", playlistCard); // Kiểm tra xem có tìm thấy card không
+        let pinnedIndicator = playlistCard.querySelector('.pinned-indicator');
+
+        if (isNowPinned) {
+            // --- Ghim ---
+            if (!pinnedIndicator) {
+                // Tạo mới nếu chưa có
+                console.log("Creating new pinned indicator span.");
+                pinnedIndicator = document.createElement('span');
+                
+                const cardIsInGridView = playlistCard.closest('#playlist-grid-view'); // Kiểm tra xem card có nằm trong grid view không
+                const positionClass = cardIsInGridView ? 'top-2 left-2' : 'top-1 left-1'; // Vị trí cho grid (top-2 left-2) hoặc list (top-1 left-1)
+                console.log("Card is in grid view:", !!cardIsInGridView, "Applying position class:", positionClass); // Log kiểm tra
+                pinnedIndicator.className = `pinned-indicator absolute z-10 text-yellow-400 ${positionClass}`; // Dùng class vị trí đúng
+                pinnedIndicator.title = 'Đã ghim';
+                // Dùng icon Pushpin 
+                pinnedIndicator.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                	  <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clip-rule="evenodd" />
+                	</svg>`;
+                // Chèn vào đầu thẻ card
+                playlistCard.insertBefore(pinnedIndicator, playlistCard.firstChild);
+                console.log("Indicator created and inserted.");
+            }
+            // Đảm bảo nó hiển thị (nếu trước đó bị ẩn)
+            pinnedIndicator.classList.remove('hidden');
+            console.log("Ensured indicator is visible.");
+        } else {
+            // --- Bỏ ghim ---
+            if (pinnedIndicator) {
+                console.log("Removing pinned indicator.");
+                pinnedIndicator.remove(); // Xóa icon khỏi DOM
+            } else {
+                console.log("Indicator not found, nothing to remove.");
+            }
+        }
+    } else {
+        // Nếu không tìm thấy thẻ card, báo lỗi
+        console.error(`Could not find playlist card with ID ${playlistId} to update icon.`);
+    }
+
+                        // 4. Hiển thị Toast (Giữ nguyên)
+                        if (typeof showToast === 'function') showToast(data.message, 'success');
+                        // Thông báo tải lại trang vẫn hữu ích để thấy thứ tự mới
+
+                    } else {
+                         if (typeof showToast === 'function') showToast(data.message || 'Có lỗi xảy ra khi ghim.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error toggling pin state:', error);
+                    if (typeof showToast === 'function') showToast(`Lỗi: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                     
+                     const menuContent = pinButton.closest('.list-menu-content, .grid-menu-content');
+                     if (menuContent) {
+                        menuContent.classList.add('hidden');
+                        menuContent.classList.remove('shown');
+                    }
+                });
+                return; // Đã xử lý nút pin
+            
+            }
+
+            // Xử lý nút xóa bên trong menu (không làm gì, để form submit)
+            if (deleteButtonInsideMenu) {
+                
+                return; // Để form tự xử lý sau confirm
+            }
+
+            // Xử lý mở/đóng menu dropdown
+            if (triggerButton) {
+                event.preventDefault();
+                event.stopPropagation();
+                const targetMenuId = triggerButton.dataset.targetMenu;
+                const targetMenu = document.getElementById(targetMenuId);
+                if (targetMenu) {
+                    const isCurrentlyShown = targetMenu.classList.contains('shown');
+                    closeAllPlaylistMenus(); // Luôn đóng các menu khác trước
+                    if (!isCurrentlyShown) {
+                        targetMenu.classList.remove('hidden');
+                        targetMenu.classList.add('shown');
+                    }
+                    
+                }
+                return; // Đã xử lý nút trigger menu
+            }
+        });
+    }
+    // --- END: Event Delegation ---
+
+
+    // --- START: Listener đóng menu khi click ra ngoài ---
+    document.addEventListener('click', (event) => {
+        const isClickInsideTrigger = event.target.closest('.list-menu-trigger, .grid-menu-trigger');
+        const isClickInsideMenu = event.target.closest('.list-menu-content, .grid-menu-content');
+
+        // Chỉ đóng menu nếu click ra ngoài cả nút trigger VÀ nội dung menu
+        if (!isClickInsideTrigger && !isClickInsideMenu) {
+            if (typeof closeAllPlaylistMenus === 'function') {
+                closeAllPlaylistMenus();
+            }
+        }
+    }, true); // Sử dụng capturing phase để bắt sự kiện trước
+    // --- END: Listener đóng menu ---
+
+
+    // --- START: Debounce cho search ---
+    const searchInput = document.getElementById('playlist-search-input');
+    const searchSortForm = document.getElementById('search-sort-form');
+    let searchTimeout;
+    const DEBOUNCE_DELAY_MS = 500;
+
+    if (searchInput && searchSortForm) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                searchSortForm.submit();
+            }, DEBOUNCE_DELAY_MS);
+        });
+    } else {
+        console.warn('Search input or form not found for debounce.');
+    }
+    // --- END: Debounce cho search ---
+
+}); // Kết thúc DOMContentLoaded
+</script>
+{% endblock %}

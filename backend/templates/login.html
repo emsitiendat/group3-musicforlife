@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+
+<div class="flex items-center justify-center min-h-full px-4 sm:px-6 lg:px-8">
+
+<div class="w-full max-w-md space-y-8 bg-[#181818] p-10 rounded-lg shadow-lg">
+
+<div>
+
+<h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+
+Đăng nhập vào tài khoản
+
+</h2>
+
+</div>
+
+<form class="mt-8 space-y-6" method="POST" action="{{ url_for('login') }}">
+
+{{ form.hidden_tag() }} <input type="hidden" name="remember" value="true">
+
+<div class="rounded-md shadow-sm -space-y-px">
+
+<div>
+
+<label for="username" class="sr-only">{{ form.username.label }}</label>
+
+
+
+{{ form.username(id="username", type="text", required=True,
+
+class="relative block w-full appearance-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm mb-4",
+
+placeholder="Tên đăng nhập") }}
+
+{% if form.username.errors %}
+
+<ul class="text-red-500 text-xs italic mt-1">
+
+{% for error in form.username.errors %}<li>{{ error }}</li>{% endfor %}
+
+</ul>
+
+{% endif %}
+
+</div>
+
+                <div> 
+                    <label for="password" class="sr-only">{{ form.password.label }}</label>
+                     {# Bọc input và button vào div relative #}
+                    <div class="relative">
+                        {{ form.password(id="password", type="password", required=True,
+                           class="relative block w-full appearance-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 pr-10 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm",
+                           placeholder="Mật khẩu") }} {# Thêm pr-10 #}
+
+                        {# Nút hiển thị/ẩn mật khẩu #}
+                        <button type="button" onclick="togglePasswordVisibility('password', this)"
+                                class="password-toggle-button absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-white focus:outline-none" {# Thêm class password-toggle-button nếu dùng CSS z-index #}
+                                title="Hiện/Ẩn mật khẩu">
+                            {# Icon mắt mở #}
+                            <svg class="h-5 w-5 toggle-eye-open" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                               <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                               <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 0 1 0-1.186A10.004 10.004 0 0 1 10 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0 1 10 17c-4.257 0-7.893-2.66-9.336-6.41ZM14 10a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" clip-rule="evenodd" />
+                             </svg>
+                             {# Icon mắt đóng #}
+                             <svg class="h-5 w-5 toggle-eye-closed hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M3.28 2.22a.75.75 0 0 0-1.06 1.06l14.5 14.5a.75.75 0 1 0 1.06-1.06l-1.745-1.745a10.029 10.029 0 0 0 3.3-4.38 1.651 1.651 0 0 0 0-1.185A10.004 10.004 0 0 0 10 3c-.996 0-1.951.138-2.863.395L5.07 1.944A.75.75 0 0 0 3.28 2.22ZM7.06 4.969l.86 1.147a3.001 3.001 0 0 1 2.221.53l2.374 1.582A4.003 4.003 0 0 1 14 10a4 4 0 1 1-6.93-2.498l.53-1.417A9.982 9.982 0 0 1 10 5c.978 0 1.912.144 2.794.409l.797.266A11.44 11.44 0 0 0 10 4.5c-1.104 0-2.159.191-3.14.531l-.42.146A9.98 9.98 0 0 0 3.69 7.13l-.17.171A1.651 1.651 0 0 0 2.25 9.409a10.004 10.004 0 0 0 7.75 7.081l2.386-2.385a3.002 3.002 0 0 1-1.858-1.858l-1.583-2.374a3.003 3.003 0 0 1-.53-2.221Z" clip-rule="evenodd" />
+                              </svg>
+                         </button>
+                     </div>
+                    {% if form.password.errors %}
+                        <ul class="text-red-500 text-xs italic mt-1 pl-1">
+                            {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+                 
+            </div>	
+
+<div class="pt-4"> {# Thêm pt-4 để tạo khoảng cách với input mật khẩu #}
+                {{ form.submit(class="group relative flex w-full justify-center rounded-full border border-transparent bg-green-600 py-2 px-4 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer") }}
+            </div>
+        </form>
+
+
+
+<div class="text-sm text-center mt-4">
+
+<span class="text-gray-400">Chưa có tài khoản?</span>
+
+<a href="{{ url_for('register') }}" class="font-medium text-green-400 hover:text-green-300">
+
+Đăng ký ngay!
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}
+{% block scripts %}
+{{ super() }} 
+<script>
+function togglePasswordVisibility(inputId, buttonElement) {
+    const passwordInput = document.getElementById(inputId);
+    const eyeOpenIcon = buttonElement.querySelector('.toggle-eye-open');
+    const eyeClosedIcon = buttonElement.querySelector('.toggle-eye-closed');
+
+    if (passwordInput && eyeOpenIcon && eyeClosedIcon) {
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            eyeOpenIcon.classList.add('hidden');
+            eyeClosedIcon.classList.remove('hidden');
+            buttonElement.setAttribute('title', 'Ẩn mật khẩu');
+        } else {
+            passwordInput.type = "password";
+            eyeOpenIcon.classList.remove('hidden');
+            eyeClosedIcon.classList.add('hidden');
+            buttonElement.setAttribute('title', 'Hiện mật khẩu');
+        }
+    }
+}
+</script>
+{% endblock %}

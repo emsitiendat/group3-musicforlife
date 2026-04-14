@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+
+
+{% block content %}
+
+{# Container #}
+
+<div class="flex items-center justify-center min-h-full px-4 sm:px-6 lg:px-8">
+
+<div class="w-full max-w-md space-y-8 bg-[#181818] p-10 rounded-lg shadow-lg">
+
+<div>
+
+<h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-white">
+
+Tạo Playlist Mới
+
+</h2>
+
+</div>
+
+<form class="mt-8 space-y-6" method="POST" action="{{ url_for('create_playlist') }}">
+    {{ form.hidden_tag() }}
+    <div class="space-y-4"> {# Thay rounded-md shadow-sm bằng space-y-4 #}
+        {# Tên Playlist Input #}
+        <div>
+            <label for="name" class="sr-only">{{ form.name.label }}</label>
+            {{ form.name(id="name", required=True,
+            class="relative block w-full appearance-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm",
+            placeholder="Tên Playlist") }}
+            {% if form.name.errors %}
+                <ul class="text-red-500 text-xs italic mt-1 pl-1">{% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        {# <<< THÊM CHECKBOX CÔNG KHAI >>> #}
+        <div class="flex items-center">
+             {{ form.is_public(id="is_public", class="h-4 w-4 rounded border-gray-600 bg-gray-800 text-green-500 focus:ring-green-400 focus:ring-offset-gray-900 cursor-pointer") }}
+             <label for="is_public" class="ml-2 block text-sm text-gray-300 cursor-pointer">{{ form.is_public.label.text }}</label>
+        </div>
+        {# <<< KẾT THÚC CHECKBOX >>> #}
+    </div>
+
+    <div>
+        {{ form.submit(value="Tạo Playlist",
+        class="group relative flex w-full justify-center rounded-full border border-transparent bg-[#1DB954] py-2 px-4 text-sm font-bold text-black hover:bg-[#1ED760] focus:outline-none focus:ring-2 focus:ring-[#1DB954] focus:ring-offset-2 focus:ring-offset-gray-900 cursor-pointer uppercase tracking-wider transform hover:scale-105 active:scale-100 transition duration-200 ease-in-out mt-6") }}
+    </div>
+</form>
+
+
+
+<div class="text-sm text-center mt-4">
+
+<a href="{{ url_for('playlists') }}" class="font-medium text-gray-400 hover:text-white hover:underline">
+
+&larr; Quay lại danh sách Playlist
+
+</a>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

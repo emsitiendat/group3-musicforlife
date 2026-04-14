@@ -1,0 +1,139 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+
+{% block head_css %}
+    {{ super() }} 
+    {# Font Awesome 5 #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    {# Tiêu đề Dashboard #}
+    <div class="row" style="margin-bottom: 20px;">
+        <div class="col-sm-12">
+            <h1>{{ admin_view.name | default('Dashboard Tổng Quan') }}</h1>
+            <p class="lead">Thông tin tổng quan về hệ thống nghe nhạc.</p>
+        </div>
+    </div>
+
+    {# Hàng chứa các thẻ thống kê nhanh #}
+    <div class="row" style="margin-bottom: 20px;">
+        {# Thẻ số lượng người dùng #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card text-white bg-primary mb-3">
+                
+                <div class="card-header">
+                    <i class="fas fa-users mr-2"></i>Người dùng  {# fas fa-users là icon người dùng #}
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.user_count }}</h4>
+                    <p class="card-text">Tổng số tài khoản</p>
+                </div>
+                <div class="card-footer bg-transparent border-light">
+                    <a href="{{ url_for('user.index_view') }}" class="text-white stretched-link">Xem chi tiết &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+        {# Thẻ số lượng bài hát #}
+        <div class="col-lg-3 col-md-6">
+            <div class="card text-white bg-success mb-3">
+                
+                <div class="card-header">
+                    <i class="fas fa-music mr-2"></i>Bài hát {# fas fa-music là icon nốt nhạc #}
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.song_count }}</h4>
+                    <p class="card-text">Tổng số bài hát</p>
+                </div>
+                 <div class="card-footer bg-transparent border-light">
+                    <a href="{{ url_for('song.index_view') }}" class="text-white stretched-link">Xem chi tiết &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+        {# Thẻ số lượng playlist #}
+         <div class="col-lg-3 col-md-6">
+            <div class="card text-white bg-info mb-3">
+                 
+                <div class="card-header">
+                    <i class="fas fa-list mr-2"></i>Playlists {# fas fa-list là icon danh sách #}
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.playlist_count }}</h4>
+                    <p class="card-text">Tổng số playlists</p>
+                </div>
+                 <div class="card-footer bg-transparent border-light">
+                     <a href="{{ url_for('playlist.index_view') }}" class="text-white stretched-link">Xem chi tiết &raquo;</a>
+                </div>
+            </div>
+        </div>
+
+        {# Thẻ số lượt nghe #}
+         <div class="col-lg-3 col-md-6">
+            <div class="card text-white bg-warning mb-3">
+                 
+                <div class="card-header">
+                    <i class="fas fa-headphones mr-2"></i>Lượt nghe {# fas fa-headphones là icon tai nghe #}
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ stats.listen_count }}</h4>
+                    <p class="card-text">Tổng lượt nghe (ước tính)</p>
+                </div>
+                <div class="card-footer bg-transparent border-light">
+                    <a href="{{ url_for('listeninghistory.index_view') }}" class="text-white stretched-link">Xem lịch sử &raquo;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Hàng chứa danh sách hoạt động gần đây #}
+     <div class="row">
+          {# Bài hát mới thêm #}
+          <div class="col-md-6">
+              <div class="card mb-3">
+                  <div class="card-header">Bài hát mới thêm gần đây</div>
+                  <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                      {% if recent_songs %}
+                          <ul class="list-unstyled">
+                              {% for song in recent_songs %}
+                                  <li class="mb-2 pb-2 border-bottom">
+                                      <a href="{{ url_for('song.details_view', id=song.id) }}">{{ song.title }}</a>
+                                      <span class="text-muted d-block text-sm">- {{ song.artist }}</span>
+                                      <small class="text-muted float-right">{{ song.uploaded_at.strftime('%d/%m/%Y %H:%M') if song.uploaded_at else '' }}</small>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      {% else %}
+                          <p class="card-text text-muted">Chưa có bài hát nào được thêm.</p>
+                      {% endif %}
+                  </div>
+              </div>
+          </div>
+
+          {# Người dùng mới đăng ký #}
+           <div class="col-md-6">
+              <div class="card mb-3">
+                 <div class="card-header">Người dùng mới đăng ký</div>
+                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                      {% if recent_users %}
+                          <ul class="list-unstyled">
+                              {% for user in recent_users %}
+                                  <li class="mb-2 pb-2 border-bottom">
+                                       <a href="{{ url_for('user.details_view', id=user.id) }}">{{ user.username }}</a>
+                                       <span class="badge badge-secondary">{{ user.role }}</span>
+                                       <small class="text-muted float-right">{{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else '' }}</small>
+                                  </li>
+                              {% endfor %}
+                          </ul>
+                      {% else %}
+                          <p class="card-text text-muted">Chưa có người dùng nào đăng ký gần đây.</p>
+                      {% endif %}
+                  </div>
+              </div>
+           </div>
+     </div>
+ </div> {# End container-fluid #}
+{% endblock %}
